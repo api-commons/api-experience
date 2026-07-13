@@ -16,9 +16,12 @@ import { renderExperience } from './render';
 import { initEngage } from './engage';
 import { esc, escAttr } from './ui';
 
+// `src` is what we actually fetch (must be same-origin or CORS-enabled); `show` is the
+// human label. apis.io/apis.json has no CORS header, so we bundle it locally and let the
+// tool fetch its OpenAPI from githubusercontent (which does allow cross-origin).
 const DEFAULTS = [
-  { label: 'APIs.io', url: 'https://apis.io/apis.json', blurb: 'The API → MCP → Agent-Skill surface of apis.io itself: discovery free, synthesis Pro.' },
-  { label: 'API Evangelist', url: 'https://apievangelist.com/apis.json', blurb: 'The API Evangelist network index.' },
+  { label: 'APIs.io', src: './examples/apis-io.json', show: 'apis.io/apis.json', blurb: 'The API → MCP → Agent-Skill surface of apis.io itself: discovery free, synthesis Pro.' },
+  { label: 'API Evangelist', src: 'https://apievangelist.com/apis.yml', show: 'apievangelist.com/apis.yml', blurb: 'The API Evangelist network index.' },
 ];
 
 let current: ApisDoc | null = null;
@@ -84,10 +87,10 @@ function landing(): void {
         <h2>Start with</h2>
         <div class="ex-grid">
           ${DEFAULTS.map((e) => `
-            <button class="ex-card" data-url="${escAttr(e.url)}">
+            <button class="ex-card" data-url="${escAttr(e.src)}">
               <strong>${esc(e.label)}</strong>
               <span>${esc(e.blurb)}</span>
-              <code>${esc(e.url)}</code>
+              <code>${esc(e.show)}</code>
             </button>`).join('')}
         </div>
         <p class="cors-note">Loading a URL fetches it in your browser — the host must allow cross-origin reads (CORS). If a load fails, download the file and drop it here.</p>
@@ -173,8 +176,15 @@ if (inline?.textContent?.trim()) {
 } else if (urlParam) {
   loadUrl(urlParam);
 } else {
-  // Try ./apis.json next to this file (zip mode); fall back to the landing (defaults to apis.io + AE).
+  // Zip mode: ./apis.json next to this file. Otherwise default-load the bundled apis.io example
+  // so the tool shows the DX/AX journey on first visit; the landing (Open…) is one click away.
   fetch('./apis.json')
-    .then((r) => (r.ok ? r.text().then((t) => loadText(t, './apis.json')) : landing()))
+    .then((r) => (r.ok ? r.text().then((t) => loadText(t, './apis.json')) : defaultLoad()))
+    .catch(() => defaultLoad());
+}
+
+function defaultLoad(): void {
+  fetch(DEFAULTS[0].src)
+    .then((r) => (r.ok ? r.text().then((t) => loadText(t, DEFAULTS[0].show)) : landing()))
     .catch(() => landing());
 }
