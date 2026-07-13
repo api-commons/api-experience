@@ -239,19 +239,36 @@ function suggestModal(kind: SuggestKind, exp: ExpApi, state: string, suggestions
       : state === 'empty'
         ? `<p class="muted">No suggestions came back — try a different kind or refine the guide skill.</p>`
         : `<p class="sug-intro">Pick suggestions to add${op ? ` to <code>${esc(op.method)} ${esc(op.path)}</code>` : ` to <strong>${esc(exp.name)}</strong>`}. Each one edits the in-memory OpenAPI and re-renders the journey — download the bundle when you're happy.</p>
-           <div class="sug-list">${suggestions.map((s, i) => `
+           <div class="sug-list">${suggestions.map((s, i) => {
+             const hasTier = kind !== 'skill'; // Agent Skills aren't tiered in the model
+             const def = s.tier || (kind === 'tool' && op?.tier === 'pro' ? 'pro' : 'free');
+             return `
              <div class="sug-item" data-i="${i}">
                <div class="sug-text"><code>${esc(describe(kind, s))}</code>${s.description || s.summary ? `<span class="sug-desc">${esc(s.description || s.summary || '')}</span>` : ''}</div>
-               <button class="btn sug-add" data-i="${i}">+ Add</button>
-             </div>`).join('')}</div>`;
+               <div class="sug-actions">
+                 ${hasTier ? `<span class="sug-tier" title="Set the tier for this addition">
+                   <button type="button" class="tglt ${def === 'free' ? 'on' : ''}" data-t="free">Free</button>
+                   <button type="button" class="tglt ${def === 'pro' ? 'on' : ''}" data-t="pro">Pro</button>
+                 </span>` : ''}
+                 <button class="btn sug-add" data-i="${i}">+ Add</button>
+               </div>
+             </div>`; }).join('')}</div>`;
   sModal.innerHTML = `<div class="modal-card suggest-card">
       <div class="modal-head"><span>✨ Suggest ${esc(kind)}${op ? ` for ${esc(op.method)} ${esc(op.path)}` : ''}</span><button type="button" class="sug-close" aria-label="Close">×</button></div>
       <div class="suggest-body">${body}</div>
     </div>`;
   sModal.hidden = false;
   sModal.querySelector('.sug-close')!.addEventListener('click', () => { sModal!.hidden = true; });
+  sModal.querySelectorAll<HTMLButtonElement>('.tglt').forEach((t) => t.addEventListener('click', () => {
+    const wrap = t.closest('.sug-tier')!;
+    wrap.querySelectorAll('.tglt').forEach((x) => x.classList.remove('on'));
+    t.classList.add('on');
+  }));
   sModal.querySelectorAll<HTMLButtonElement>('.sug-add').forEach((btn) => btn.addEventListener('click', () => {
-    const s = suggestions[Number(btn.dataset.i)];
+    const item = btn.closest('.sug-item')!;
+    const onTier = item.querySelector<HTMLElement>('.tglt.on');
+    const s = { ...suggestions[Number(btn.dataset.i)] };
+    if (onTier) s.tier = onTier.dataset.t as 'free' | 'pro';
     applySuggestion(kind, exp, s, op);
     deriveSurface(exp);
     if (model) model.coverage = computeCoverage(model.apis);

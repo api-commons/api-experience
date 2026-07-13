@@ -122,11 +122,12 @@ export function applySuggestion(kind: SuggestKind, exp: ExpApi, s: Suggestion, o
   };
 
   if (kind === 'tool' && op?.operationId) {
-    // Attach an MCP tool to an existing operation (inline suggestion).
-    onOp(op.operationId, (o) => { o['x-mcp-tool'] = s.mcpTool || ''; });
+    // Attach an MCP tool to an existing operation (inline suggestion). A chosen tier also sets the
+    // operation's tier (a tool's tier IS its operation's tier).
+    onOp(op.operationId, (o) => { o['x-mcp-tool'] = s.mcpTool || ''; if (s.tier) o['x-tier'] = s.tier; });
     const mapped = asObj(ops[op.operationId]);
     mapped.mcpTool = s.mcpTool || '';
-    if (mapped.tier == null) mapped.tier = op.tier === 'unknown' ? 'free' : op.tier;
+    mapped.tier = s.tier || mapped.tier || (op.tier === 'unknown' ? 'free' : op.tier);
     ops[op.operationId] = mapped;
   } else if (kind === 'path') {
     // Add a brand-new operation (global suggestion).

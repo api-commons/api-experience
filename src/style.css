@@ -476,3 +476,11 @@ div.resp { display: flex; align-items: center; gap: 0.6rem; padding: 0.4rem 0.6r
 .op-menu .op-menu-h { font-size: .72rem; color: var(--muted); padding: .45rem .7rem; border-bottom: 1px solid var(--line-soft); }
 .op-menu button { display: block; width: 100%; text-align: left; padding: .5rem .7rem; background: none; border: none; color: var(--fg); cursor: pointer; font-size: .88rem; }
 .op-menu button:hover { background: var(--bg-inset); }
+
+/* Per-suggestion tier toggle */
+.sug-actions { display: flex; align-items: center; gap: .5rem; }
+.sug-tier { display: inline-flex; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
+.sug-tier .tglt { border: none; background: var(--bg-soft); color: var(--muted); cursor: pointer; font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .3px; padding: .25em .6em; }
+.sug-tier .tglt + .tglt { border-left: 1px solid var(--line); }
+.sug-tier .tglt.on[data-t=free] { background: color-mix(in srgb, var(--ok) 15%, transparent); color: var(--ok); }
+.sug-tier .tglt.on[data-t=pro] { background: var(--accent-soft); color: var(--accent); }
