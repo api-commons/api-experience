@@ -58,6 +58,29 @@ function coverageBar(label: string, n: number, d: number, cls = ''): string {
     </div>`;
 }
 
+// The rest of the MCP surface beyond tools: prompts (guided flows) and resources (attachable
+// context) — server-level, each tier-badged. Part of the DX/AX equation.
+function mcpSurface(a: ExpApi): string {
+  if (!a.prompts.length && !a.resources.length) return '';
+  const group = (label: string, icon: string, cls: string, items: { name: string; tier: Tier; description?: string }[]) =>
+    items.length ? `
+      <div class="surface-group">
+        <div class="surface-h">${esc(label)} <span class="muted">${items.length}</span></div>
+        ${items.map((it) => `
+          <div class="surf-row surf-${it.tier}">
+            <span class="node node-${cls}"><span class="node-ic">${icon}</span><code>${esc(it.name)}</code></span>
+            ${tierBadge(it.tier)}
+            ${it.description ? `<span class="surf-desc">${esc(it.description)}</span>` : ''}
+          </div>`).join('')}
+      </div>` : '';
+  return `
+    <div class="mcp-surface">
+      <div class="surface-title">MCP prompts &amp; resources <span class="muted">— the rest of the agent surface, beyond tools</span></div>
+      ${group('Prompts', '◇', 'prompt', a.prompts)}
+      ${group('Resources', '▤', 'resource', a.resources.map((r) => ({ name: r.uri, tier: r.tier, description: r.description })))}
+    </div>`;
+}
+
 function apiSection(a: ExpApi): string {
   const ops = a.operations;
   const gaps = ops.filter((o) => !o.mcpTool || !o.agentSkill);
@@ -99,6 +122,7 @@ function apiSection(a: ExpApi): string {
 
   return `<section class="api-block">${head}${scorecard}${gapNote}
     <div class="journey">${legend}${ops.map(journeyRow).join('')}</div>
+    ${mcpSurface(a)}
   </section>`;
 }
 
@@ -112,6 +136,8 @@ export function renderExperience(model: ExperienceModel, sourceLabel: string): s
       <div class="tile"><span class="tile-n">${c.totalOps}</span><span class="tile-l">operations</span></div>
       <div class="tile"><span class="tile-n">${pct(c.withMcp, c.totalOps)}%</span><span class="tile-l">have MCP tool</span></div>
       <div class="tile"><span class="tile-n">${pct(c.withSkill, c.totalOps)}%</span><span class="tile-l">have Agent Skill</span></div>
+      <div class="tile"><span class="tile-n">${c.prompts}</span><span class="tile-l">MCP prompts</span></div>
+      <div class="tile"><span class="tile-n">${c.resources}</span><span class="tile-l">MCP resources</span></div>
       <div class="tile"><span class="tile-n"><span class="tier tier-free">${c.free}</span> <span class="tier tier-pro">${c.pro}</span></span><span class="tile-l">free / pro ops</span></div>
     </div>`;
 
@@ -134,7 +160,7 @@ export function renderExperience(model: ExperienceModel, sourceLabel: string): s
         ${coverageBar('MCP coverage across all operations', c.withMcp, c.totalOps, 'fill-mcp')}
         ${coverageBar('Agent Skill coverage across all operations', c.withSkill, c.totalOps, 'fill-skill')}
       </div>
-      <p class="legend-note"><span class="node node-mcp"><span class="node-ic">⚙</span>MCP tool</span> · <span class="node node-skill"><span class="node-ic">✦</span>Agent Skill</span> · ${tierBadge('free')} open discovery · ${tierBadge('pro')} paid synthesis · the chain reads <strong>REST operation → MCP tool → Agent Skill</strong>.</p>
+      <p class="legend-note"><span class="node node-mcp"><span class="node-ic">⚙</span>MCP tool</span> · <span class="node node-prompt"><span class="node-ic">◇</span>prompt</span> · <span class="node node-resource"><span class="node-ic">▤</span>resource</span> · <span class="node node-skill"><span class="node-ic">✦</span>Agent Skill</span> · ${tierBadge('free')} open discovery · ${tierBadge('pro')} paid synthesis · the surface reads <strong>REST operation → MCP (tools + prompts + resources) → Agent Skill</strong>.</p>
     </section>`;
 
   return `<div class="experience">${overall}${model.apis.map(apiSection).join('')}</div>`;

@@ -417,3 +417,15 @@ div.resp { display: flex; align-items: center; gap: 0.6rem; padding: 0.4rem 0.6r
 .spinner { width: 28px; height: 28px; border: 3px solid var(--line); border-top-color: var(--accent); border-radius: 50%; margin: 0 auto 1rem; animation: spin 1s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
 .error-box pre { text-align: left; white-space: pre-wrap; }
+
+/* MCP surface — prompts + resources (beyond tools) */
+.mcp-surface { margin-top: 1rem; padding-top: .9rem; border-top: 1px dashed var(--line); }
+.surface-title { font-size: .9rem; font-weight: 600; color: var(--brand); margin-bottom: .6rem; }
+.surface-group { margin-bottom: .7rem; }
+.surface-h { font-size: .7rem; text-transform: uppercase; letter-spacing: .4px; color: var(--muted); margin-bottom: .3rem; }
+.surface-h .muted { background: var(--bg-inset); border-radius: 999px; padding: 0 .45em; margin-left: .2rem; }
+.surf-row { display: grid; grid-template-columns: minmax(0, auto) 44px 1fr; align-items: center; gap: .5rem; padding: .3rem .2rem; border-bottom: 1px solid var(--line-soft); }
+.surf-row.surf-pro { background: color-mix(in srgb, var(--accent) 5%, transparent); }
+.surf-desc { font-size: .78rem; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.node-prompt .node-ic { color: var(--put); }
+.node-resource .node-ic { color: var(--other); }

@@ -35,6 +35,9 @@ export interface ExpOperation {
   agentSkill?: string;
 }
 
+export interface ExpPrompt { name: string; tier: Tier; description?: string; }
+export interface ExpResource { uri: string; tier: Tier; description?: string; }
+
 export interface ExpApi {
   api: ApiItem;
   name: string;
@@ -43,6 +46,8 @@ export interface ExpApi {
   hasOpenApi: boolean;
   openApiError?: string;
   operations: ExpOperation[];
+  prompts: ExpPrompt[];
+  resources: ExpResource[];
   mcpServer?: string;
   agentSkills?: string;
   pricing?: string;
@@ -58,6 +63,8 @@ export interface Coverage {
   withSkill: number;
   free: number;
   pro: number;
+  prompts: number;
+  resources: number;
 }
 
 export interface ExperienceModel {
@@ -67,6 +74,9 @@ export interface ExperienceModel {
 }
 
 const lc = (s: unknown) => String(s ?? '').toLowerCase().trim();
+const tierOf = (v: unknown): Tier => { const t = lc(v); return t === 'free' || t === 'pro' ? t : 'unknown'; };
+const arr = (v: unknown): Record<string, unknown>[] =>
+  Array.isArray(v) ? v.filter((x) => x && typeof x === 'object') as Record<string, unknown>[] : [];
 const obj = (v: unknown): Record<string, unknown> =>
   v && typeof v === 'object' && !Array.isArray(v) ? (v as Record<string, unknown>) : {};
 
@@ -142,6 +152,8 @@ export async function buildExperience(doc: ApisDoc): Promise<ExperienceModel> {
       anchor: api.anchor,
       hasOpenApi: false,
       operations: [],
+      prompts: [],
+      resources: [],
       mcpServer: findProp(props, TYPES.mcp)?.url,
       agentSkills: findProp(props, TYPES.skills)?.url,
       pricing: findProp(props, TYPES.pricing)?.url,
@@ -154,6 +166,9 @@ export async function buildExperience(doc: ApisDoc): Promise<ExperienceModel> {
       if (oaDoc) {
         exp.hasOpenApi = true;
         exp.operations = extractOperations(oaDoc);
+        const x = obj(oaDoc['x-apis-io']);
+        exp.prompts = arr(x.prompts).map((p) => ({ name: str(p.name) || '(unnamed)', tier: tierOf(p.tier), description: str(p.description) }));
+        exp.resources = arr(x.resources).map((r) => ({ uri: str(r.uri) || '(unnamed)', tier: tierOf(r.tier), description: str(r.description) }));
       } else {
         exp.openApiError = error;
       }
@@ -170,6 +185,8 @@ export async function buildExperience(doc: ApisDoc): Promise<ExperienceModel> {
     withSkill: allOps.filter((o) => o.agentSkill).length,
     free: allOps.filter((o) => o.tier === 'free').length,
     pro: allOps.filter((o) => o.tier === 'pro').length,
+    prompts: apis.reduce((n, a) => n + a.prompts.length, 0),
+    resources: apis.reduce((n, a) => n + a.resources.length, 0),
   };
   return { doc, apis, coverage };
 }
