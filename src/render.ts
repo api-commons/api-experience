@@ -39,7 +39,7 @@ function journeyRow(op: ExpOperation): string {
       <div class="jcell">${chainCell('mcp', op.mcpTool)}</div>
       <div class="jarrow">→</div>
       <div class="jcell">${chainCell('skill', op.agentSkill)}</div>
-      <div class="jcell jtier">${tierBadge(op.tier)}</div>
+      <div class="jcell jtier">${tierBadge(op.tier)}${op.operationId ? `<button class="op-suggest" data-op="${escAttr(op.operationId)}" title="Suggest a tool, prompt, resource, or skill for this operation">✨</button>` : ''}</div>
     </div>`;
 }
 

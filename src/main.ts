@@ -11,7 +11,7 @@
 import './style.css';
 import { parse as parseYAML } from 'yaml';
 import { normalize, type ApisDoc } from './model';
-import { buildExperience, deriveSurface, computeCoverage, type ExperienceModel, type ExpApi } from './experience';
+import { buildExperience, deriveSurface, computeCoverage, type ExperienceModel, type ExpApi, type ExpOperation } from './experience';
 import { renderExperience } from './render';
 import { initEngage } from './engage';
 import { initSettings, openSettings, getToken } from './settings';
@@ -42,16 +42,7 @@ function shell(): void {
         <span class="tag">DX / AX for any APIs.json</span>
       </div>
       <nav>
-        <div class="menu-wrap">
-          <button class="ghost-btn" id="btn-suggest" title="Suggest additions with Claude">✨ Suggest ▾</button>
-          <div class="menu" id="suggest-menu" hidden>
-            <button data-kind="path">Path (new operation)</button>
-            <button data-kind="tool">MCP tool</button>
-            <button data-kind="prompt">MCP prompt</button>
-            <button data-kind="resource">MCP resource</button>
-            <button data-kind="skill">Agent Skill</button>
-          </div>
-        </div>
+        <button class="ghost-btn" id="btn-suggest-path" title="Suggest new operations (paths) with Claude — tool/prompt/resource/skill are suggested inline per operation (the ✨ on each row)">✨ Suggest path</button>
         <button class="ghost-btn" id="btn-download" title="Download versioned bundle">⤓ Download</button>
         <button class="ghost-btn" id="btn-settings" title="Settings — Claude token, guide skill">⚙ Settings</button>
         <button class="ghost-btn" id="btn-open" title="Load a different APIs.json">Open…</button>
@@ -69,12 +60,18 @@ function shell(): void {
   });
   document.getElementById('btn-settings')!.addEventListener('click', () => openSettings());
   document.getElementById('btn-download')!.addEventListener('click', () => doDownload());
-  const suggestMenu = document.getElementById('suggest-menu')!;
-  document.getElementById('btn-suggest')!.addEventListener('click', (e) => { e.stopPropagation(); suggestMenu.hidden = !suggestMenu.hidden; });
-  document.addEventListener('click', () => { suggestMenu.hidden = true; });
-  suggestMenu.querySelectorAll<HTMLButtonElement>('button[data-kind]').forEach((b) =>
-    b.addEventListener('click', () => { suggestMenu.hidden = true; runSuggest(b.dataset.kind as SuggestKind); }));
+  document.getElementById('btn-suggest-path')!.addEventListener('click', () => runSuggest('path'));
   initSettings(() => {});
+
+  // Inline per-operation suggest: the ✨ on each journey row opens a kind menu scoped to that op.
+  app.addEventListener('click', (e) => {
+    const btn = (e.target as HTMLElement).closest<HTMLButtonElement>('.op-suggest');
+    if (!btn) return;
+    e.stopPropagation();
+    const op = model?.apis.flatMap((a) => a.operations).find((o) => o.operationId === btn.dataset.op);
+    if (op) openOpMenu(btn, op);
+  });
+  document.addEventListener('click', () => closeOpMenu());
 
   initEngage(() => {
     if (!current) return 'Context: browsing API Experience with no APIs.json loaded yet.';
@@ -189,23 +186,46 @@ function targetApi(): ExpApi | null {
   return model?.apis.find((a) => a.hasOpenApi && a.oaDoc) || null;
 }
 
-async function runSuggest(kind: SuggestKind): Promise<void> {
+// Anchored kind-menu opened by the inline ✨ on an operation row.
+let opMenuEl: HTMLElement | null = null;
+function closeOpMenu(): void { opMenuEl?.remove(); opMenuEl = null; }
+function openOpMenu(anchor: HTMLElement, op: ExpOperation): void {
+  closeOpMenu();
+  const el = document.createElement('div');
+  el.className = 'op-menu';
+  el.innerHTML = `
+    <div class="op-menu-h">Suggest for ${esc(op.method)} ${esc(op.path)}</div>
+    <button data-k="tool">⚙ MCP tool</button>
+    <button data-k="prompt">◇ MCP prompt</button>
+    <button data-k="resource">▤ MCP resource</button>
+    <button data-k="skill">✦ Agent Skill</button>`;
+  el.addEventListener('click', (e) => e.stopPropagation());
+  document.body.appendChild(el);
+  const r = anchor.getBoundingClientRect();
+  el.style.top = `${window.scrollY + r.bottom + 4}px`;
+  el.style.left = `${window.scrollX + Math.min(r.left, window.innerWidth - 220)}px`;
+  el.querySelectorAll<HTMLButtonElement>('button[data-k]').forEach((b) =>
+    b.addEventListener('click', () => { closeOpMenu(); runSuggest(b.dataset.k as SuggestKind, op); }));
+  opMenuEl = el;
+}
+
+async function runSuggest(kind: SuggestKind, op?: ExpOperation): Promise<void> {
   const token = getToken();
   if (!token) { openSettings(); return; }
   const exp = targetApi();
   if (!exp) { alert('Load an API that has an OpenAPI first — suggestions extend its operations.'); return; }
-  suggestModal(kind, exp, 'loading', []);
+  suggestModal(kind, exp, 'loading', [], '', op);
   try {
-    const suggestions = await suggest(kind, exp, token);
-    if (!suggestions.length) { suggestModal(kind, exp, 'empty', []); return; }
-    suggestModal(kind, exp, 'ready', suggestions);
+    const suggestions = await suggest(kind, exp, token, op);
+    if (!suggestions.length) { suggestModal(kind, exp, 'empty', [], '', op); return; }
+    suggestModal(kind, exp, 'ready', suggestions, '', op);
   } catch (e) {
-    suggestModal(kind, exp, 'error', [], e instanceof Error ? e.message : String(e));
+    suggestModal(kind, exp, 'error', [], e instanceof Error ? e.message : String(e), op);
   }
 }
 
 let sModal: HTMLElement | null = null;
-function suggestModal(kind: SuggestKind, exp: ExpApi, state: string, suggestions: Awaited<ReturnType<typeof suggest>>, err = ''): void {
+function suggestModal(kind: SuggestKind, exp: ExpApi, state: string, suggestions: Awaited<ReturnType<typeof suggest>>, err = '', op?: ExpOperation): void {
   if (!sModal) {
     sModal = document.createElement('div');
     sModal.className = 'modal suggest-modal';
@@ -218,21 +238,21 @@ function suggestModal(kind: SuggestKind, exp: ExpApi, state: string, suggestions
       ? `<div class="error-box"><p>${esc(err)}</p></div>`
       : state === 'empty'
         ? `<p class="muted">No suggestions came back — try a different kind or refine the guide skill.</p>`
-        : `<p class="sug-intro">Pick suggestions to add to <strong>${esc(exp.name)}</strong>. Each one edits the in-memory OpenAPI and re-renders the journey — download the bundle when you're happy.</p>
+        : `<p class="sug-intro">Pick suggestions to add${op ? ` to <code>${esc(op.method)} ${esc(op.path)}</code>` : ` to <strong>${esc(exp.name)}</strong>`}. Each one edits the in-memory OpenAPI and re-renders the journey — download the bundle when you're happy.</p>
            <div class="sug-list">${suggestions.map((s, i) => `
              <div class="sug-item" data-i="${i}">
                <div class="sug-text"><code>${esc(describe(kind, s))}</code>${s.description || s.summary ? `<span class="sug-desc">${esc(s.description || s.summary || '')}</span>` : ''}</div>
                <button class="btn sug-add" data-i="${i}">+ Add</button>
              </div>`).join('')}</div>`;
   sModal.innerHTML = `<div class="modal-card suggest-card">
-      <div class="modal-head"><span>✨ Suggest ${esc(kind)}</span><button type="button" class="sug-close" aria-label="Close">×</button></div>
+      <div class="modal-head"><span>✨ Suggest ${esc(kind)}${op ? ` for ${esc(op.method)} ${esc(op.path)}` : ''}</span><button type="button" class="sug-close" aria-label="Close">×</button></div>
       <div class="suggest-body">${body}</div>
     </div>`;
   sModal.hidden = false;
   sModal.querySelector('.sug-close')!.addEventListener('click', () => { sModal!.hidden = true; });
   sModal.querySelectorAll<HTMLButtonElement>('.sug-add').forEach((btn) => btn.addEventListener('click', () => {
     const s = suggestions[Number(btn.dataset.i)];
-    applySuggestion(kind, exp, s);
+    applySuggestion(kind, exp, s, op);
     deriveSurface(exp);
     if (model) model.coverage = computeCoverage(model.apis);
     editCount++;

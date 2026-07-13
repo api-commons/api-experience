@@ -391,7 +391,7 @@ div.resp { display: flex; align-items: center; gap: 0.6rem; padding: 0.4rem 0.6r
 
 /* Journey rows */
 .journey { margin-top: .5rem; display: flex; flex-direction: column; }
-.jhead, .jrow { display: grid; grid-template-columns: minmax(0,2.4fr) 18px minmax(0,1.3fr) 18px minmax(0,1.3fr) 56px; align-items: center; gap: .5rem; }
+.jhead, .jrow { display: grid; grid-template-columns: minmax(0,2.4fr) 18px minmax(0,1.3fr) 18px minmax(0,1.3fr) 84px; align-items: center; gap: .5rem; }
 .jhead { font-size: .7rem; text-transform: uppercase; letter-spacing: .4px; color: var(--muted); padding: .3rem .2rem; border-bottom: 1px solid var(--line); }
 .jrow { padding: .4rem .2rem; border-bottom: 1px solid var(--line-soft); }
 .jrow-pro { background: color-mix(in srgb, var(--accent) 5%, transparent); }
@@ -463,3 +463,14 @@ div.resp { display: flex; align-items: center; gap: 0.6rem; padding: 0.4rem 0.6r
 .sug-desc { font-size: .8rem; color: var(--muted); }
 .sug-add { white-space: nowrap; }
 .sug-add:disabled { opacity: .6; cursor: default; border-color: var(--ok); color: var(--ok); }
+
+/* Inline per-operation suggest control */
+.jtier { display: flex; align-items: center; justify-content: flex-end; gap: .3rem; }
+.op-suggest { border: 1px solid var(--line); background: var(--bg-soft); color: var(--accent); border-radius: 5px; cursor: pointer; font-size: .8rem; line-height: 1; padding: .2em .4em; opacity: .5; transition: opacity .12s, border-color .12s; }
+.jrow:hover .op-suggest { opacity: 1; }
+.op-suggest:hover { border-color: var(--accent); }
+/* op-scoped kind menu (anchored popover) */
+.op-menu { position: absolute; z-index: 50; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; box-shadow: var(--shadow); min-width: 200px; overflow: hidden; }
+.op-menu .op-menu-h { font-size: .72rem; color: var(--muted); padding: .45rem .7rem; border-bottom: 1px solid var(--line-soft); }
+.op-menu button { display: block; width: 100%; text-align: left; padding: .5rem .7rem; background: none; border: none; color: var(--fg); cursor: pointer; font-size: .88rem; }
+.op-menu button:hover { background: var(--bg-inset); }

@@ -6,7 +6,7 @@
 
 import { callClaudeJSON } from './claude';
 import { getGuideSkill } from './guide';
-import type { ExpApi } from './experience';
+import type { ExpApi, ExpOperation } from './experience';
 
 export type SuggestKind = 'path' | 'tool' | 'prompt' | 'resource' | 'skill';
 
@@ -39,55 +39,66 @@ const tierEnum = { type: 'string', enum: ['free', 'pro'] };
 const methodEnum = { type: 'string', enum: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'] };
 const strT = { type: 'string' };
 
-function schemaFor(kind: SuggestKind): Record<string, unknown> {
+// `scoped` = suggesting for a specific existing operation (inline), so operation-identifying
+// fields (path/method/operationId) are already known and dropped from the schema.
+function schemaFor(kind: SuggestKind, scoped: boolean): Record<string, unknown> {
   const item = (props: Record<string, unknown>, required: string[]) =>
     ({ type: 'object', additionalProperties: false, properties: props, required });
   let itemSchema: Record<string, unknown>;
-  if (kind === 'path' || kind === 'tool') {
+  if (kind === 'path') {
     itemSchema = item(
       { path: strT, method: methodEnum, operationId: strT, summary: strT, tier: tierEnum, mcpTool: strT, agentSkill: strT },
       ['path', 'method', 'operationId', 'summary', 'tier', 'mcpTool']);
+  } else if (kind === 'tool') {
+    itemSchema = item({ mcpTool: strT, description: strT }, ['mcpTool', 'description']);
   } else if (kind === 'prompt') {
     itemSchema = item({ name: strT, tier: tierEnum, description: strT, uses: { type: 'array', items: strT } },
       ['name', 'tier', 'description', 'uses']);
   } else if (kind === 'resource') {
     itemSchema = item({ uri: strT, tier: tierEnum, description: strT, operation: strT }, ['uri', 'tier', 'description']);
   } else { // skill
-    itemSchema = item({ name: strT, description: strT, operationId: strT }, ['name', 'description', 'operationId']);
+    const props: Record<string, unknown> = { name: strT, description: strT };
+    if (!scoped) props.operationId = strT;
+    itemSchema = item(props, scoped ? ['name', 'description'] : ['name', 'description', 'operationId']);
   }
   return { type: 'object', additionalProperties: false, required: ['suggestions'], properties: { suggestions: { type: 'array', items: itemSchema } } };
 }
 
 const ASK: Record<SuggestKind, string> = {
   path: 'Suggest up to 4 NEW REST operations (paths) this API should add to round out its surface. For each, include the MCP tool name it maps to and its free/pro tier. Fill the most valuable gaps first.',
-  tool: 'Suggest up to 4 MCP tools that would improve the agent experience — prefer covering operations that currently have no tool (tool:—). Give each a real operation (path + method + operationId) and tier.',
-  prompt: 'Suggest up to 4 MCP prompts (guided multi-step flows) that would help. Each should list the MCP tool names it orchestrates in "uses" (use existing tool names where possible).',
-  resource: 'Suggest up to 4 MCP resources (attachable context documents) that would ground an agent. Give each a stable apis://-style uri; set "operation" to the backing operationId when one applies.',
-  skill: 'Suggest up to 4 Agent Skills, each wrapping a repeatable task. Set "operationId" to the primary existing operation the skill builds on, and use a short kebab-case slug for the name.',
+  tool: 'Suggest 1-3 MCP tool names for the focus operation below — the tool an agent would call to invoke it. lower_snake_case verb. Include a one-line description.',
+  prompt: 'Suggest up to 4 MCP prompts (guided multi-step flows). Each lists the MCP tool names it orchestrates in "uses" (use existing tool names where possible).',
+  resource: 'Suggest up to 4 MCP resources (attachable context documents). Give each a stable apis://-style uri; set "operation" to the backing operationId when one applies.',
+  skill: 'Suggest up to 4 Agent Skills, each wrapping a repeatable task. Use a short kebab-case slug for the name.',
 };
 
-export async function suggest(kind: SuggestKind, exp: ExpApi, token: string): Promise<Suggestion[]> {
+export async function suggest(kind: SuggestKind, exp: ExpApi, token: string, op?: ExpOperation): Promise<Suggestion[]> {
+  const focus = op
+    ? `\nFocus on this specific operation:\n  ${op.method} ${op.path}  (id:${op.operationId || '?'}, tier:${op.tier}, tool:${op.mcpTool || '—'}, skill:${op.agentSkill || '—'})\nMake the suggestion(s) specifically for it — a ${kind} that attaches to this operation.\n`
+    : '';
   const prompt = `${ASK[kind]}
-
+${focus}
 Here is the API's current surface — extend it, don't invent unrelated features:
 
 ${context(exp)}
 
 Return ONLY the suggestions object.`;
-  const out = await callClaudeJSON<{ suggestions: Suggestion[] }>({ token, system: getGuideSkill(), prompt, schema: schemaFor(kind) });
+  const out = await callClaudeJSON<{ suggestions: Suggestion[] }>({ token, system: getGuideSkill(), prompt, schema: schemaFor(kind, !!op) });
   return (out.suggestions || []).slice(0, 8);
 }
 
 // A one-line human label for a suggestion in the picker.
 export function describe(kind: SuggestKind, s: Suggestion): string {
-  if (kind === 'path' || kind === 'tool') return `${s.method} ${s.path} → ${s.mcpTool} [${s.tier}]`;
+  if (kind === 'path') return `${s.method} ${s.path} → ${s.mcpTool} [${s.tier}]`;
+  if (kind === 'tool') return `⚙ ${s.mcpTool}`;
   if (kind === 'prompt') return `◇ ${s.name} [${s.tier}]`;
   if (kind === 'resource') return `▤ ${s.uri} [${s.tier}]`;
-  return `✦ ${s.name} → ${s.operationId}`;
+  return `✦ ${s.name}`;
 }
 
-// Mutate exp.oaDoc in place. Caller re-derives + re-renders.
-export function applySuggestion(kind: SuggestKind, exp: ExpApi, s: Suggestion): void {
+// Mutate exp.oaDoc in place. When `op` is set, the suggestion attaches to that existing operation.
+// Caller re-derives + re-renders.
+export function applySuggestion(kind: SuggestKind, exp: ExpApi, s: Suggestion, op?: ExpOperation): void {
   const doc = exp.oaDoc;
   if (!doc) return;
   if (!doc.paths || typeof doc.paths !== 'object') doc.paths = {};
@@ -99,8 +110,26 @@ export function applySuggestion(kind: SuggestKind, exp: ExpApi, s: Suggestion): 
   doc['x-apis-io'] = x;
   const paths = asObj(doc.paths);
   const ops = asObj(x.operations);
+  // Mutate an existing operation (found by operationId) across whatever method it lives under.
+  const onOp = (operationId: string, apply: (o: Record<string, unknown>) => void) => {
+    for (const pi of Object.values(paths)) {
+      const item = asObj(pi);
+      for (const mk of Object.keys(item)) {
+        const o = asObj(item[mk]);
+        if (o.operationId === operationId) apply(o);
+      }
+    }
+  };
 
-  if (kind === 'path' || kind === 'tool') {
+  if (kind === 'tool' && op?.operationId) {
+    // Attach an MCP tool to an existing operation (inline suggestion).
+    onOp(op.operationId, (o) => { o['x-mcp-tool'] = s.mcpTool || ''; });
+    const mapped = asObj(ops[op.operationId]);
+    mapped.mcpTool = s.mcpTool || '';
+    if (mapped.tier == null) mapped.tier = op.tier === 'unknown' ? 'free' : op.tier;
+    ops[op.operationId] = mapped;
+  } else if (kind === 'path') {
+    // Add a brand-new operation (global suggestion).
     const p = s.path || '/new'; const m = (s.method || 'GET').toLowerCase(); const id = s.operationId || 'newOp';
     const pathItem = asObj(paths[p]); paths[p] = pathItem;
     pathItem[m] = {
@@ -112,19 +141,14 @@ export function applySuggestion(kind: SuggestKind, exp: ExpApi, s: Suggestion): 
     doc.paths = paths;
     ops[id] = { tier: s.tier || 'free', mcpTool: s.mcpTool || '', ...(s.agentSkill ? { agentSkill: s.agentSkill } : {}) };
   } else if (kind === 'prompt') {
-    (x.prompts as unknown[]).push({ name: s.name, tier: s.tier || 'free', description: s.description || '', uses: s.uses || [] });
+    const uses = [...(s.uses || [])];
+    if (op?.mcpTool && !uses.includes(op.mcpTool)) uses.push(op.mcpTool);
+    (x.prompts as unknown[]).push({ name: s.name, tier: s.tier || 'free', description: s.description || '', uses });
   } else if (kind === 'resource') {
-    (x.resources as unknown[]).push({ uri: s.uri, tier: s.tier || 'free', description: s.description || '', ...(s.operation ? { operation: s.operation } : {}) });
-  } else { // skill — attach to an existing operation
-    const id = s.operationId; const slug = s.name;
-    for (const pi of Object.values(paths)) {
-      const item = asObj(pi);
-      for (const mk of Object.keys(item)) {
-        const op = asObj(item[mk]);
-        if (op.operationId === id) op['x-agent-skill'] = slug;
-      }
-    }
-    const mapped = asObj(ops[id || '']); mapped.agentSkill = slug;
-    if (id) ops[id] = mapped;
+    const operation = op?.operationId || s.operation;
+    (x.resources as unknown[]).push({ uri: s.uri, tier: s.tier || 'free', description: s.description || '', ...(operation ? { operation } : {}) });
+  } else { // skill — attach to the focus (or suggested) operation
+    const id = op?.operationId || s.operationId; const slug = s.name;
+    if (id) { onOp(id, (o) => { o['x-agent-skill'] = slug; }); const mapped = asObj(ops[id]); mapped.agentSkill = slug; ops[id] = mapped; }
   }
 }
