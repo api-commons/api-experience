@@ -50,6 +50,7 @@ export interface ExpApi {
   operations: ExpOperation[];
   prompts: ExpPrompt[];
   resources: ExpResource[];
+  oaDoc?: Record<string, unknown>; // the parsed, MUTABLE OpenAPI — edits here re-derive the surface
   mcpServer?: string;
   agentSkills?: string;
   pricing?: string;
@@ -169,30 +170,40 @@ export async function buildExperience(doc: ApisDoc): Promise<ExperienceModel> {
       exp.openApiUrl = url || oaProp.url;
       if (oaDoc) {
         exp.hasOpenApi = true;
-        exp.operations = extractOperations(oaDoc);
-        const x = obj(oaDoc['x-apis-io']);
-        exp.prompts = arr(x.prompts).map((p) => ({
-          name: str(p.name) || '(unnamed)', tier: tierOf(p.tier), description: str(p.description),
-          uses: Array.isArray(p.uses) ? (p.uses as unknown[]).map(String) : [],
-        }));
-        exp.resources = arr(x.resources).map((r) => ({
-          uri: str(r.uri) || '(unnamed)', tier: tierOf(r.tier), description: str(r.description), operation: str(r.operation),
-        }));
-        // Link prompts (via the tool they use) and resources (via the operation they back) onto
-        // each operation, so the journey can show the full surface a single operation feeds.
-        for (const o of exp.operations) {
-          o.linkedPrompts = o.mcpTool ? exp.prompts.filter((p) => (p.uses || []).includes(o.mcpTool!)) : [];
-          o.linkedResources = o.operationId ? exp.resources.filter((r) => r.operation === o.operationId) : [];
-        }
+        exp.oaDoc = oaDoc;
+        deriveSurface(exp);
       } else {
         exp.openApiError = error;
       }
     }
     apis.push(exp);
   }
+  return { doc, apis, coverage: computeCoverage(apis) };
+}
 
+// (Re)derive an API's operations, prompts, resources, and per-operation linkage from its (possibly
+// just-mutated) `oaDoc`. Called on first load and after every edit in the iteration layer.
+export function deriveSurface(exp: ExpApi): void {
+  const oaDoc = exp.oaDoc;
+  if (!oaDoc) return;
+  exp.operations = extractOperations(oaDoc);
+  const x = obj(oaDoc['x-apis-io']);
+  exp.prompts = arr(x.prompts).map((p) => ({
+    name: str(p.name) || '(unnamed)', tier: tierOf(p.tier), description: str(p.description),
+    uses: Array.isArray(p.uses) ? (p.uses as unknown[]).map(String) : [],
+  }));
+  exp.resources = arr(x.resources).map((r) => ({
+    uri: str(r.uri) || '(unnamed)', tier: tierOf(r.tier), description: str(r.description), operation: str(r.operation),
+  }));
+  for (const o of exp.operations) {
+    o.linkedPrompts = o.mcpTool ? exp.prompts.filter((p) => (p.uses || []).includes(o.mcpTool!)) : [];
+    o.linkedResources = o.operationId ? exp.resources.filter((r) => r.operation === o.operationId) : [];
+  }
+}
+
+export function computeCoverage(apis: ExpApi[]): Coverage {
   const allOps = apis.flatMap((a) => a.operations);
-  const coverage: Coverage = {
+  return {
     apis: apis.length,
     apisWithOpenApi: apis.filter((a) => a.hasOpenApi).length,
     totalOps: allOps.length,
@@ -203,5 +214,4 @@ export async function buildExperience(doc: ApisDoc): Promise<ExperienceModel> {
     prompts: apis.reduce((n, a) => n + a.prompts.length, 0),
     resources: apis.reduce((n, a) => n + a.resources.length, 0),
   };
-  return { doc, apis, coverage };
 }
