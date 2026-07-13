@@ -369,6 +369,8 @@ div.resp { display: flex; align-items: center; gap: 0.6rem; padding: 0.4rem 0.6r
 .cbar-fill { height: 100%; background: var(--accent); border-radius: 5px; }
 .cbar-fill.fill-mcp { background: var(--post); }
 .cbar-fill.fill-skill { background: var(--patch); }
+.cbar-fill.fill-prompt { background: var(--put); }
+.cbar-fill.fill-resource { background: var(--other); }
 
 /* Tier badges */
 .tier { display: inline-block; font-size: .68rem; font-weight: 700; padding: .08em .5em; border-radius: 999px; text-transform: uppercase; letter-spacing: .4px; border: 1px solid transparent; }

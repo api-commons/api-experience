@@ -108,6 +108,8 @@ function apiSection(a: ExpApi): string {
     <div class="scorecard">
       ${coverageBar('Operations with an MCP tool', ops.filter((o) => o.mcpTool).length, ops.length, 'fill-mcp')}
       ${coverageBar('Operations with an Agent Skill', ops.filter((o) => o.agentSkill).length, ops.length, 'fill-skill')}
+      ${coverageBar('Operations with a linked prompt', ops.filter((o) => o.linkedPrompts.length).length, ops.length, 'fill-prompt')}
+      ${coverageBar('Operations with a linked resource', ops.filter((o) => o.linkedResources.length).length, ops.length, 'fill-resource')}
       <div class="tier-split">
         <span class="tier tier-free">Free ${ops.filter((o) => o.tier === 'free').length}</span>
         <span class="tier tier-pro">Pro ${ops.filter((o) => o.tier === 'pro').length}</span>
