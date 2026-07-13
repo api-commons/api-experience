@@ -33,10 +33,12 @@ export interface ExpOperation {
   tier: Tier;
   mcpTool?: string;
   agentSkill?: string;
+  linkedPrompts: ExpPrompt[];
+  linkedResources: ExpResource[];
 }
 
-export interface ExpPrompt { name: string; tier: Tier; description?: string; }
-export interface ExpResource { uri: string; tier: Tier; description?: string; }
+export interface ExpPrompt { name: string; tier: Tier; description?: string; uses?: string[]; }
+export interface ExpResource { uri: string; tier: Tier; description?: string; operation?: string; }
 
 export interface ExpApi {
   api: ApiItem;
@@ -134,6 +136,8 @@ function extractOperations(doc: Record<string, unknown>): ExpOperation[] {
         tier,
         mcpTool: str(op['x-mcp-tool'] ?? mapped.mcpTool),
         agentSkill: str(op['x-agent-skill'] ?? mapped.agentSkill),
+        linkedPrompts: [],
+        linkedResources: [],
       });
     }
   }
@@ -167,8 +171,19 @@ export async function buildExperience(doc: ApisDoc): Promise<ExperienceModel> {
         exp.hasOpenApi = true;
         exp.operations = extractOperations(oaDoc);
         const x = obj(oaDoc['x-apis-io']);
-        exp.prompts = arr(x.prompts).map((p) => ({ name: str(p.name) || '(unnamed)', tier: tierOf(p.tier), description: str(p.description) }));
-        exp.resources = arr(x.resources).map((r) => ({ uri: str(r.uri) || '(unnamed)', tier: tierOf(r.tier), description: str(r.description) }));
+        exp.prompts = arr(x.prompts).map((p) => ({
+          name: str(p.name) || '(unnamed)', tier: tierOf(p.tier), description: str(p.description),
+          uses: Array.isArray(p.uses) ? (p.uses as unknown[]).map(String) : [],
+        }));
+        exp.resources = arr(x.resources).map((r) => ({
+          uri: str(r.uri) || '(unnamed)', tier: tierOf(r.tier), description: str(r.description), operation: str(r.operation),
+        }));
+        // Link prompts (via the tool they use) and resources (via the operation they back) onto
+        // each operation, so the journey can show the full surface a single operation feeds.
+        for (const o of exp.operations) {
+          o.linkedPrompts = o.mcpTool ? exp.prompts.filter((p) => (p.uses || []).includes(o.mcpTool!)) : [];
+          o.linkedResources = o.operationId ? exp.resources.filter((r) => r.operation === o.operationId) : [];
+        }
       } else {
         exp.openApiError = error;
       }

@@ -429,3 +429,9 @@ div.resp { display: flex; align-items: center; gap: 0.6rem; padding: 0.4rem 0.6r
 .surf-desc { font-size: .78rem; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .node-prompt .node-ic { color: var(--put); }
 .node-resource .node-ic { color: var(--other); }
+
+/* Per-operation linked prompts/resources (the surface a single operation feeds) */
+.op-linked { display: flex; flex-wrap: wrap; gap: .3rem; margin-top: .25rem; }
+.link-chip { font-size: .68rem; padding: .05em .4em; border-radius: 4px; border: 1px solid var(--line-soft); color: var(--muted); background: var(--bg-inset); }
+.link-prompt { color: var(--put); border-color: color-mix(in srgb, var(--put) 30%, transparent); }
+.link-resource { color: var(--other); }

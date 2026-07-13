@@ -25,9 +25,14 @@ function chainCell(kind: 'mcp' | 'skill', value?: string): string {
 function journeyRow(op: ExpOperation): string {
   const op_label = `${methodChip(op.method)}<code class="op-path">${esc(op.path)}</code>`;
   const sum = op.summary ? `<span class="op-sum">${esc(op.summary)}</span>` : '';
+  const linked = [
+    ...op.linkedPrompts.map((p) => `<span class="link-chip link-prompt" title="Prompt (${p.tier}) that orchestrates this tool">◇ ${esc(p.name)}</span>`),
+    ...op.linkedResources.map((r) => `<span class="link-chip link-resource" title="Resource (${r.tier}) backed by this operation">▤ ${esc(r.uri)}</span>`),
+  ].join('');
+  const linkedLine = linked ? `<span class="op-linked">${linked}</span>` : '';
   return `
     <div class="jrow jrow-${op.tier}">
-      <div class="jcell jop">${op_label}${sum}</div>
+      <div class="jcell jop">${op_label}${sum}${linkedLine}</div>
       <div class="jarrow">→</div>
       <div class="jcell">${chainCell('mcp', op.mcpTool)}</div>
       <div class="jarrow">→</div>
