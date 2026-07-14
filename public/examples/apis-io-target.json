@@ -1,0 +1,1452 @@
+{
+  "specificationVersion": "0.21",
+  "name": "APIs.io (target surface)",
+  "description": "Proposed robust API → MCP → Agent-Skill buildout for apis.io — a roadmap, not the live contract.",
+  "image": "https://apis.io/assets/branding/apisio-social-card.png",
+  "url": "https://apis.io/apis.json",
+  "created": "2024-04-13",
+  "modified": "2026-07-14",
+  "apis": [
+    {
+      "aid": "apis-io:api",
+      "name": "APIs.io API (target)",
+      "description": "The proposed robust surface — 54 operations, 11 MCP prompts, 12 resources, and 10 Agent Skills.",
+      "humanURL": "https://apis.io/developer/",
+      "baseURL": "https://apis.io/api/v1",
+      "properties": [
+        {
+          "type": "OpenAPI",
+          "data": {
+            "openapi": "3.1.0",
+            "info": {
+              "title": "APIs.io API — target surface (roadmap)",
+              "version": "2.0.0-target",
+              "description": "A ROADMAP for a robust API → MCP (tools + prompts + resources) → Agent-Skill surface for apis.io — the live contract plus proposed additions (tagged Proposed). Rendered by the API Experience tool so the whole target buildout is visible at once. Not the live contract; see https://apis.io/apis.json for what is deployed today."
+            },
+            "servers": [
+              {
+                "url": "https://apis.io/api/v1",
+                "description": "Production server (live operations)."
+              }
+            ],
+            "x-apis-io": {
+              "tiers": {
+                "free": {
+                  "label": "Free",
+                  "description": "Raw discovery — search, providers, apis, tags, and every artifact-type collection."
+                },
+                "pro": {
+                  "label": "Pro",
+                  "description": "Curated dimensions, rating data, and synthesis composites.",
+                  "plans": "https://apis.io/developer/plans/"
+                }
+              },
+              "mcp": {
+                "endpoint": "https://apis.io/mcp",
+                "serverCard": "https://apis.io/.well-known/mcp/server-card.json"
+              },
+              "agentSkills": {
+                "index": "https://apis.io/.well-known/agent-skills/index.json"
+              },
+              "prompts": [
+                {
+                  "name": "find_api",
+                  "tier": "free",
+                  "description": "Find an API for a task or use case, ranked with links.",
+                  "uses": [
+                    "apis_io_search"
+                  ]
+                },
+                {
+                  "name": "explain_artifact",
+                  "tier": "free",
+                  "description": "Explain one API artifact and how to use it.",
+                  "uses": [
+                    "get_api"
+                  ]
+                },
+                {
+                  "name": "provider_overview",
+                  "tier": "free",
+                  "description": "Summarize what one provider offers.",
+                  "uses": [
+                    "get_provider"
+                  ]
+                },
+                {
+                  "name": "integrate_provider",
+                  "tier": "free",
+                  "description": "NEW — Walk through integrating a provider: pull its OpenAPI, onboarding, and auth, then produce concrete first-integration steps.",
+                  "uses": [
+                    "get_provider",
+                    "get_openapi",
+                    "get_provider_onboarding"
+                  ]
+                },
+                {
+                  "name": "api_readiness_check",
+                  "tier": "free",
+                  "description": "NEW — Assess whether an API is ready to adopt: its artifacts, rating, and what is missing.",
+                  "uses": [
+                    "get_api",
+                    "get_api_artifacts",
+                    "get_provider_rating"
+                  ]
+                },
+                {
+                  "name": "design_api_stack",
+                  "tier": "pro",
+                  "description": "PRO — Design a recommended API stack for a team/domain, exportable as APIs.json.",
+                  "uses": [
+                    "find_providers",
+                    "apis_io_search",
+                    "find_industries",
+                    "find_ratings",
+                    "recommend_stack"
+                  ]
+                },
+                {
+                  "name": "vendor_shortlist",
+                  "tier": "pro",
+                  "description": "PRO — Build a scored vendor shortlist for one capability.",
+                  "uses": [
+                    "find_providers",
+                    "apis_io_search",
+                    "find_ratings",
+                    "get_provider_rating"
+                  ]
+                },
+                {
+                  "name": "audit_api_estate",
+                  "tier": "pro",
+                  "description": "NEW · PRO — Inventory and score a set of providers, surfacing artifact and governance gaps.",
+                  "uses": [
+                    "find_providers",
+                    "compare_providers",
+                    "gap_analysis",
+                    "find_ratings"
+                  ]
+                },
+                {
+                  "name": "find_alternatives",
+                  "tier": "pro",
+                  "description": "NEW · PRO — Migration flow: find alternatives to a provider and compare them head to head.",
+                  "uses": [
+                    "find_similar_providers",
+                    "compare_providers",
+                    "get_provider_rating"
+                  ]
+                },
+                {
+                  "name": "build_agent_toolset",
+                  "tier": "pro",
+                  "description": "NEW · PRO — For a task or domain, assemble the providers, MCP tools, and skills an agent needs.",
+                  "uses": [
+                    "apis_io_search",
+                    "find_artifacts",
+                    "recommend_stack"
+                  ]
+                },
+                {
+                  "name": "track_provider_changes",
+                  "tier": "pro",
+                  "description": "NEW · PRO — Set up change monitoring for a chosen set of providers.",
+                  "uses": [
+                    "whats_changed",
+                    "get_provider"
+                  ]
+                }
+              ],
+              "resources": [
+                {
+                  "uri": "apis://catalog",
+                  "tier": "free",
+                  "description": "Service root — network-wide artifact counts."
+                },
+                {
+                  "uri": "apis://ratings/rubric",
+                  "tier": "free",
+                  "description": "The scoring rubric.",
+                  "operation": "getRatingRubric"
+                },
+                {
+                  "uri": "apis://llms.txt",
+                  "tier": "free",
+                  "description": "The apis.io llms.txt index for grounding."
+                },
+                {
+                  "uri": "apis://provider/{slug}",
+                  "tier": "free",
+                  "description": "One provider's profile.",
+                  "operation": "getProvider"
+                },
+                {
+                  "uri": "apis://provider/{slug}/dossier",
+                  "tier": "pro",
+                  "description": "PRO — the full provider dossier.",
+                  "operation": "getProvider"
+                },
+                {
+                  "uri": "apis://provider/{slug}/openapi",
+                  "tier": "free",
+                  "description": "NEW — a provider's primary OpenAPI inline, ready to attach.",
+                  "operation": "getOpenapi"
+                },
+                {
+                  "uri": "apis://tag/{slug}",
+                  "tier": "free",
+                  "description": "NEW — a tag brief: linked providers, APIs, neighbors.",
+                  "operation": "getTag"
+                },
+                {
+                  "uri": "apis://industry/{slug}",
+                  "tier": "pro",
+                  "description": "NEW · PRO — an industry brief: ranked member providers.",
+                  "operation": "getIndustry"
+                },
+                {
+                  "uri": "apis://region/{slug}",
+                  "tier": "pro",
+                  "description": "NEW · PRO — a region brief: ranked member providers.",
+                  "operation": "getRegion"
+                },
+                {
+                  "uri": "apis://area/{slug}",
+                  "tier": "pro",
+                  "description": "NEW · PRO — a curated area index.",
+                  "operation": "getArea"
+                },
+                {
+                  "uri": "apis://stack",
+                  "tier": "pro",
+                  "description": "NEW · PRO — a designed capability stack as an attachable APIs.json.",
+                  "operation": "recommendStack"
+                },
+                {
+                  "uri": "apis://changes",
+                  "tier": "pro",
+                  "description": "NEW · PRO — the recent catalog-changes feed.",
+                  "operation": "whatsChanged"
+                }
+              ],
+              "operations": {
+                "search": {
+                  "tier": "free",
+                  "mcpTool": "apis_io_search",
+                  "agentSkill": "find-api"
+                },
+                "listProviders": {
+                  "tier": "free",
+                  "mcpTool": "find_providers",
+                  "agentSkill": "discover-apis-io"
+                },
+                "getProvider": {
+                  "tier": "free",
+                  "mcpTool": "get_provider",
+                  "agentSkill": "discover-apis-io"
+                },
+                "listProviderApis": {
+                  "tier": "free",
+                  "mcpTool": "get_provider",
+                  "agentSkill": "discover-apis-io"
+                },
+                "listApis": {
+                  "tier": "free",
+                  "mcpTool": "find_apis",
+                  "agentSkill": "find-api"
+                },
+                "getApi": {
+                  "tier": "free",
+                  "mcpTool": "get_api",
+                  "agentSkill": "fetch-api-spec"
+                },
+                "listTags": {
+                  "tier": "free",
+                  "mcpTool": "find_tags",
+                  "agentSkill": "search-apis"
+                },
+                "getTag": {
+                  "tier": "free",
+                  "mcpTool": "get_tag",
+                  "agentSkill": "search-apis"
+                },
+                "getRatingRubric": {
+                  "tier": "free",
+                  "mcpTool": "get_rating_rubric"
+                },
+                "listOpenapis": {
+                  "tier": "free",
+                  "mcpTool": "find_artifacts",
+                  "agentSkill": "fetch-api-spec"
+                },
+                "listAsyncapis": {
+                  "tier": "free",
+                  "mcpTool": "find_artifacts",
+                  "agentSkill": "fetch-api-spec"
+                },
+                "listArazzo": {
+                  "tier": "free",
+                  "mcpTool": "find_artifacts",
+                  "agentSkill": "fetch-api-spec"
+                },
+                "listPostman": {
+                  "tier": "free",
+                  "mcpTool": "find_artifacts",
+                  "agentSkill": "fetch-api-spec"
+                },
+                "listCollections": {
+                  "tier": "free",
+                  "mcpTool": "find_artifacts",
+                  "agentSkill": "fetch-api-spec"
+                },
+                "listGraphql": {
+                  "tier": "free",
+                  "mcpTool": "find_artifacts",
+                  "agentSkill": "fetch-api-spec"
+                },
+                "listJsonSchemas": {
+                  "tier": "free",
+                  "mcpTool": "find_artifacts",
+                  "agentSkill": "fetch-api-spec"
+                },
+                "listJsonStructures": {
+                  "tier": "free",
+                  "mcpTool": "find_artifacts",
+                  "agentSkill": "fetch-api-spec"
+                },
+                "listJsonLd": {
+                  "tier": "free",
+                  "mcpTool": "find_artifacts",
+                  "agentSkill": "fetch-api-spec"
+                },
+                "listVocabularies": {
+                  "tier": "free",
+                  "mcpTool": "find_artifacts",
+                  "agentSkill": "search-apis"
+                },
+                "listRules": {
+                  "tier": "free",
+                  "mcpTool": "find_artifacts",
+                  "agentSkill": "audit-api-estate"
+                },
+                "listExamples": {
+                  "tier": "free",
+                  "mcpTool": "find_artifacts",
+                  "agentSkill": "fetch-api-spec"
+                },
+                "listFinops": {
+                  "tier": "free",
+                  "mcpTool": "find_artifacts",
+                  "agentSkill": "audit-api-estate"
+                },
+                "listPlans": {
+                  "tier": "free",
+                  "mcpTool": "find_artifacts",
+                  "agentSkill": "audit-api-estate"
+                },
+                "listRateLimits": {
+                  "tier": "free",
+                  "mcpTool": "find_artifacts",
+                  "agentSkill": "audit-api-estate"
+                },
+                "listChannels": {
+                  "tier": "free",
+                  "mcpTool": "find_artifacts",
+                  "agentSkill": "fetch-api-spec"
+                },
+                "listMcpServers": {
+                  "tier": "free",
+                  "mcpTool": "find_artifacts",
+                  "agentSkill": "discover-mcp-servers"
+                },
+                "listSkills": {
+                  "tier": "free",
+                  "mcpTool": "find_artifacts",
+                  "agentSkill": "discover-apis-io"
+                },
+                "listScopes": {
+                  "tier": "free",
+                  "mcpTool": "find_artifacts",
+                  "agentSkill": "audit-api-estate"
+                },
+                "listSecurity": {
+                  "tier": "free",
+                  "mcpTool": "find_artifacts",
+                  "agentSkill": "audit-api-estate"
+                },
+                "listIndustries": {
+                  "tier": "pro",
+                  "mcpTool": "find_industries",
+                  "agentSkill": "discover-apis-io"
+                },
+                "getIndustry": {
+                  "tier": "pro",
+                  "mcpTool": "get_industry",
+                  "agentSkill": "shortlist-vendors"
+                },
+                "listRegions": {
+                  "tier": "pro",
+                  "mcpTool": "find_regions",
+                  "agentSkill": "discover-apis-io"
+                },
+                "getRegion": {
+                  "tier": "pro",
+                  "mcpTool": "get_region",
+                  "agentSkill": "shortlist-vendors"
+                },
+                "listAreas": {
+                  "tier": "pro",
+                  "mcpTool": "find_areas",
+                  "agentSkill": "discover-apis-io"
+                },
+                "getArea": {
+                  "tier": "pro",
+                  "mcpTool": "get_area",
+                  "agentSkill": "shortlist-vendors"
+                },
+                "listRatings": {
+                  "tier": "pro",
+                  "mcpTool": "find_ratings",
+                  "agentSkill": "shortlist-vendors"
+                },
+                "getProviderRating": {
+                  "tier": "pro",
+                  "mcpTool": "get_provider_rating",
+                  "agentSkill": "shortlist-vendors"
+                },
+                "compareProviders": {
+                  "tier": "pro",
+                  "mcpTool": "compare_providers",
+                  "agentSkill": "audit-api-estate"
+                },
+                "gapAnalysis": {
+                  "tier": "pro",
+                  "mcpTool": "gap_analysis",
+                  "agentSkill": "audit-api-estate"
+                },
+                "whatsChanged": {
+                  "tier": "pro",
+                  "mcpTool": "whats_changed",
+                  "agentSkill": "track-api-changes"
+                },
+                "recommendStack": {
+                  "tier": "free",
+                  "mcpTool": "recommend_stack",
+                  "agentSkill": "assemble-api-stack"
+                },
+                "getProviderArtifacts": {
+                  "tier": "free",
+                  "mcpTool": "get_provider_artifacts",
+                  "agentSkill": "fetch-api-spec"
+                },
+                "getApiArtifacts": {
+                  "tier": "free",
+                  "mcpTool": "get_api_artifacts",
+                  "agentSkill": "fetch-api-spec"
+                },
+                "getOpenapi": {
+                  "tier": "free",
+                  "mcpTool": "get_openapi",
+                  "agentSkill": "integrate-provider"
+                },
+                "getProviderOnboarding": {
+                  "tier": "free",
+                  "mcpTool": "get_provider_onboarding",
+                  "agentSkill": "integrate-provider"
+                },
+                "findSimilarProviders": {
+                  "tier": "free",
+                  "mcpTool": "find_similar_providers",
+                  "agentSkill": "shortlist-vendors"
+                },
+                "findSimilarApis": {
+                  "tier": "free",
+                  "mcpTool": "find_similar_apis",
+                  "agentSkill": "find-api"
+                },
+                "getIndustryLeaders": {
+                  "tier": "pro",
+                  "mcpTool": "get_industry_leaders",
+                  "agentSkill": "shortlist-vendors"
+                },
+                "getRegionLeaders": {
+                  "tier": "pro",
+                  "mcpTool": "get_region_leaders",
+                  "agentSkill": "shortlist-vendors"
+                },
+                "getAreaLeaders": {
+                  "tier": "pro",
+                  "mcpTool": "get_area_leaders",
+                  "agentSkill": "shortlist-vendors"
+                },
+                "getRatingHistory": {
+                  "tier": "pro",
+                  "mcpTool": "get_rating_history",
+                  "agentSkill": "audit-api-estate"
+                },
+                "findRatingMovers": {
+                  "tier": "pro",
+                  "mcpTool": "find_rating_movers",
+                  "agentSkill": "track-api-changes"
+                },
+                "industryGapAnalysis": {
+                  "tier": "pro",
+                  "mcpTool": "industry_gap_analysis",
+                  "agentSkill": "audit-api-estate"
+                },
+                "exportStack": {
+                  "tier": "pro",
+                  "mcpTool": "export_stack",
+                  "agentSkill": "assemble-api-stack"
+                }
+              }
+            },
+            "paths": {
+              "/search": {
+                "get": {
+                  "operationId": "search",
+                  "summary": "Unified search across apis, providers, tags, and artifacts.",
+                  "tags": [
+                    "Discovery"
+                  ],
+                  "x-tier": "free",
+                  "x-mcp-tool": "apis_io_search",
+                  "x-agent-skill": "find-api",
+                  "responses": {
+                    "200": {
+                      "description": "Unified search across apis, providers, tags, and artifacts."
+                    }
+                  }
+                }
+              },
+              "/providers": {
+                "get": {
+                  "operationId": "listProviders",
+                  "summary": "List and filter providers.",
+                  "tags": [
+                    "Discovery"
+                  ],
+                  "x-tier": "free",
+                  "x-mcp-tool": "find_providers",
+                  "x-agent-skill": "discover-apis-io",
+                  "responses": {
+                    "200": {
+                      "description": "List and filter providers."
+                    }
+                  }
+                }
+              },
+              "/providers/{slug}": {
+                "get": {
+                  "operationId": "getProvider",
+                  "summary": "One provider with its APIs and links.",
+                  "tags": [
+                    "Discovery"
+                  ],
+                  "x-tier": "free",
+                  "x-mcp-tool": "get_provider",
+                  "x-agent-skill": "discover-apis-io",
+                  "responses": {
+                    "200": {
+                      "description": "One provider with its APIs and links."
+                    }
+                  }
+                }
+              },
+              "/providers/{slug}/apis": {
+                "get": {
+                  "operationId": "listProviderApis",
+                  "summary": "The APIs a provider publishes.",
+                  "tags": [
+                    "Discovery"
+                  ],
+                  "x-tier": "free",
+                  "x-mcp-tool": "get_provider",
+                  "x-agent-skill": "discover-apis-io",
+                  "responses": {
+                    "200": {
+                      "description": "The APIs a provider publishes."
+                    }
+                  }
+                }
+              },
+              "/apis": {
+                "get": {
+                  "operationId": "listApis",
+                  "summary": "Cross-provider API discovery.",
+                  "tags": [
+                    "Discovery"
+                  ],
+                  "x-tier": "free",
+                  "x-mcp-tool": "find_apis",
+                  "x-agent-skill": "find-api",
+                  "responses": {
+                    "200": {
+                      "description": "Cross-provider API discovery."
+                    }
+                  }
+                }
+              },
+              "/apis/{aid}": {
+                "get": {
+                  "operationId": "getApi",
+                  "summary": "Full detail for one API, artifacts optionally inlined.",
+                  "tags": [
+                    "Discovery"
+                  ],
+                  "x-tier": "free",
+                  "x-mcp-tool": "get_api",
+                  "x-agent-skill": "fetch-api-spec",
+                  "responses": {
+                    "200": {
+                      "description": "Full detail for one API, artifacts optionally inlined."
+                    }
+                  }
+                }
+              },
+              "/tags": {
+                "get": {
+                  "operationId": "listTags",
+                  "summary": "Browse/rank the tag taxonomy.",
+                  "tags": [
+                    "Discovery"
+                  ],
+                  "x-tier": "free",
+                  "x-mcp-tool": "find_tags",
+                  "x-agent-skill": "search-apis",
+                  "responses": {
+                    "200": {
+                      "description": "Browse/rank the tag taxonomy."
+                    }
+                  }
+                }
+              },
+              "/tags/{slug}": {
+                "get": {
+                  "operationId": "getTag",
+                  "summary": "One tag with providers, APIs, and neighbors.",
+                  "tags": [
+                    "Discovery"
+                  ],
+                  "x-tier": "free",
+                  "x-mcp-tool": "get_tag",
+                  "x-agent-skill": "search-apis",
+                  "responses": {
+                    "200": {
+                      "description": "One tag with providers, APIs, and neighbors."
+                    }
+                  }
+                }
+              },
+              "/ratings/rubric": {
+                "get": {
+                  "operationId": "getRatingRubric",
+                  "summary": "The rating rubric — bands, facet weights, trend thresholds.",
+                  "tags": [
+                    "Synthesis"
+                  ],
+                  "x-tier": "free",
+                  "x-mcp-tool": "get_rating_rubric",
+                  "responses": {
+                    "200": {
+                      "description": "The rating rubric — bands, facet weights, trend thresholds."
+                    }
+                  }
+                }
+              },
+              "/openapis": {
+                "get": {
+                  "operationId": "listOpenapis",
+                  "summary": "OpenAPI specifications across the catalog.",
+                  "tags": [
+                    "Discovery"
+                  ],
+                  "x-tier": "free",
+                  "x-mcp-tool": "find_artifacts",
+                  "x-agent-skill": "fetch-api-spec",
+                  "responses": {
+                    "200": {
+                      "description": "OpenAPI specifications across the catalog."
+                    }
+                  }
+                }
+              },
+              "/asyncapis": {
+                "get": {
+                  "operationId": "listAsyncapis",
+                  "summary": "AsyncAPI specifications across the catalog.",
+                  "tags": [
+                    "Discovery"
+                  ],
+                  "x-tier": "free",
+                  "x-mcp-tool": "find_artifacts",
+                  "x-agent-skill": "fetch-api-spec",
+                  "responses": {
+                    "200": {
+                      "description": "AsyncAPI specifications across the catalog."
+                    }
+                  }
+                }
+              },
+              "/arazzo": {
+                "get": {
+                  "operationId": "listArazzo",
+                  "summary": "Arazzo workflows across the catalog.",
+                  "tags": [
+                    "Discovery"
+                  ],
+                  "x-tier": "free",
+                  "x-mcp-tool": "find_artifacts",
+                  "x-agent-skill": "fetch-api-spec",
+                  "responses": {
+                    "200": {
+                      "description": "Arazzo workflows across the catalog."
+                    }
+                  }
+                }
+              },
+              "/postman": {
+                "get": {
+                  "operationId": "listPostman",
+                  "summary": "Postman collections across the catalog.",
+                  "tags": [
+                    "Discovery"
+                  ],
+                  "x-tier": "free",
+                  "x-mcp-tool": "find_artifacts",
+                  "x-agent-skill": "fetch-api-spec",
+                  "responses": {
+                    "200": {
+                      "description": "Postman collections across the catalog."
+                    }
+                  }
+                }
+              },
+              "/collections": {
+                "get": {
+                  "operationId": "listCollections",
+                  "summary": "API collections across the catalog.",
+                  "tags": [
+                    "Discovery"
+                  ],
+                  "x-tier": "free",
+                  "x-mcp-tool": "find_artifacts",
+                  "x-agent-skill": "fetch-api-spec",
+                  "responses": {
+                    "200": {
+                      "description": "API collections across the catalog."
+                    }
+                  }
+                }
+              },
+              "/graphql": {
+                "get": {
+                  "operationId": "listGraphql",
+                  "summary": "GraphQL schemas across the catalog.",
+                  "tags": [
+                    "Discovery"
+                  ],
+                  "x-tier": "free",
+                  "x-mcp-tool": "find_artifacts",
+                  "x-agent-skill": "fetch-api-spec",
+                  "responses": {
+                    "200": {
+                      "description": "GraphQL schemas across the catalog."
+                    }
+                  }
+                }
+              },
+              "/json-schemas": {
+                "get": {
+                  "operationId": "listJsonSchemas",
+                  "summary": "JSON Schemas across the catalog.",
+                  "tags": [
+                    "Discovery"
+                  ],
+                  "x-tier": "free",
+                  "x-mcp-tool": "find_artifacts",
+                  "x-agent-skill": "fetch-api-spec",
+                  "responses": {
+                    "200": {
+                      "description": "JSON Schemas across the catalog."
+                    }
+                  }
+                }
+              },
+              "/json-structures": {
+                "get": {
+                  "operationId": "listJsonStructures",
+                  "summary": "JSON Structures across the catalog.",
+                  "tags": [
+                    "Discovery"
+                  ],
+                  "x-tier": "free",
+                  "x-mcp-tool": "find_artifacts",
+                  "x-agent-skill": "fetch-api-spec",
+                  "responses": {
+                    "200": {
+                      "description": "JSON Structures across the catalog."
+                    }
+                  }
+                }
+              },
+              "/json-ld": {
+                "get": {
+                  "operationId": "listJsonLd",
+                  "summary": "JSON-LD contexts across the catalog.",
+                  "tags": [
+                    "Discovery"
+                  ],
+                  "x-tier": "free",
+                  "x-mcp-tool": "find_artifacts",
+                  "x-agent-skill": "fetch-api-spec",
+                  "responses": {
+                    "200": {
+                      "description": "JSON-LD contexts across the catalog."
+                    }
+                  }
+                }
+              },
+              "/vocabularies": {
+                "get": {
+                  "operationId": "listVocabularies",
+                  "summary": "Vocabularies across the catalog.",
+                  "tags": [
+                    "Discovery"
+                  ],
+                  "x-tier": "free",
+                  "x-mcp-tool": "find_artifacts",
+                  "x-agent-skill": "search-apis",
+                  "responses": {
+                    "200": {
+                      "description": "Vocabularies across the catalog."
+                    }
+                  }
+                }
+              },
+              "/rules": {
+                "get": {
+                  "operationId": "listRules",
+                  "summary": "Governance rulesets across the catalog.",
+                  "tags": [
+                    "Discovery"
+                  ],
+                  "x-tier": "free",
+                  "x-mcp-tool": "find_artifacts",
+                  "x-agent-skill": "audit-api-estate",
+                  "responses": {
+                    "200": {
+                      "description": "Governance rulesets across the catalog."
+                    }
+                  }
+                }
+              },
+              "/examples": {
+                "get": {
+                  "operationId": "listExamples",
+                  "summary": "Request/response payload examples across the catalog.",
+                  "tags": [
+                    "Discovery"
+                  ],
+                  "x-tier": "free",
+                  "x-mcp-tool": "find_artifacts",
+                  "x-agent-skill": "fetch-api-spec",
+                  "responses": {
+                    "200": {
+                      "description": "Request/response payload examples across the catalog."
+                    }
+                  }
+                }
+              },
+              "/finops": {
+                "get": {
+                  "operationId": "listFinops",
+                  "summary": "FinOps artifacts across the catalog.",
+                  "tags": [
+                    "Discovery"
+                  ],
+                  "x-tier": "free",
+                  "x-mcp-tool": "find_artifacts",
+                  "x-agent-skill": "audit-api-estate",
+                  "responses": {
+                    "200": {
+                      "description": "FinOps artifacts across the catalog."
+                    }
+                  }
+                }
+              },
+              "/plans": {
+                "get": {
+                  "operationId": "listPlans",
+                  "summary": "Pricing plans across the catalog.",
+                  "tags": [
+                    "Discovery"
+                  ],
+                  "x-tier": "free",
+                  "x-mcp-tool": "find_artifacts",
+                  "x-agent-skill": "audit-api-estate",
+                  "responses": {
+                    "200": {
+                      "description": "Pricing plans across the catalog."
+                    }
+                  }
+                }
+              },
+              "/rate-limits": {
+                "get": {
+                  "operationId": "listRateLimits",
+                  "summary": "Rate-limit policies across the catalog.",
+                  "tags": [
+                    "Discovery"
+                  ],
+                  "x-tier": "free",
+                  "x-mcp-tool": "find_artifacts",
+                  "x-agent-skill": "audit-api-estate",
+                  "responses": {
+                    "200": {
+                      "description": "Rate-limit policies across the catalog."
+                    }
+                  }
+                }
+              },
+              "/channels": {
+                "get": {
+                  "operationId": "listChannels",
+                  "summary": "AsyncAPI event channels across the catalog.",
+                  "tags": [
+                    "Discovery"
+                  ],
+                  "x-tier": "free",
+                  "x-mcp-tool": "find_artifacts",
+                  "x-agent-skill": "fetch-api-spec",
+                  "responses": {
+                    "200": {
+                      "description": "AsyncAPI event channels across the catalog."
+                    }
+                  }
+                }
+              },
+              "/mcp": {
+                "get": {
+                  "operationId": "listMcpServers",
+                  "summary": "Published MCP servers across the catalog.",
+                  "tags": [
+                    "Discovery"
+                  ],
+                  "x-tier": "free",
+                  "x-mcp-tool": "find_artifacts",
+                  "x-agent-skill": "discover-mcp-servers",
+                  "responses": {
+                    "200": {
+                      "description": "Published MCP servers across the catalog."
+                    }
+                  }
+                }
+              },
+              "/skills": {
+                "get": {
+                  "operationId": "listSkills",
+                  "summary": "Published Agent Skills across the catalog.",
+                  "tags": [
+                    "Discovery"
+                  ],
+                  "x-tier": "free",
+                  "x-mcp-tool": "find_artifacts",
+                  "x-agent-skill": "discover-apis-io",
+                  "responses": {
+                    "200": {
+                      "description": "Published Agent Skills across the catalog."
+                    }
+                  }
+                }
+              },
+              "/scopes": {
+                "get": {
+                  "operationId": "listScopes",
+                  "summary": "OAuth scope sets across the catalog.",
+                  "tags": [
+                    "Discovery"
+                  ],
+                  "x-tier": "free",
+                  "x-mcp-tool": "find_artifacts",
+                  "x-agent-skill": "audit-api-estate",
+                  "responses": {
+                    "200": {
+                      "description": "OAuth scope sets across the catalog."
+                    }
+                  }
+                }
+              },
+              "/security": {
+                "get": {
+                  "operationId": "listSecurity",
+                  "summary": "Security scheme definitions across the catalog.",
+                  "tags": [
+                    "Discovery"
+                  ],
+                  "x-tier": "free",
+                  "x-mcp-tool": "find_artifacts",
+                  "x-agent-skill": "audit-api-estate",
+                  "responses": {
+                    "200": {
+                      "description": "Security scheme definitions across the catalog."
+                    }
+                  }
+                }
+              },
+              "/industries": {
+                "get": {
+                  "operationId": "listIndustries",
+                  "summary": "List and filter industries.",
+                  "tags": [
+                    "Dimensions"
+                  ],
+                  "x-tier": "pro",
+                  "x-mcp-tool": "find_industries",
+                  "x-agent-skill": "discover-apis-io",
+                  "responses": {
+                    "200": {
+                      "description": "List and filter industries."
+                    }
+                  }
+                }
+              },
+              "/industries/{slug}": {
+                "get": {
+                  "operationId": "getIndustry",
+                  "summary": "One industry with ranked providers.",
+                  "tags": [
+                    "Dimensions"
+                  ],
+                  "x-tier": "pro",
+                  "x-mcp-tool": "get_industry",
+                  "x-agent-skill": "shortlist-vendors",
+                  "responses": {
+                    "200": {
+                      "description": "One industry with ranked providers."
+                    }
+                  }
+                }
+              },
+              "/regions": {
+                "get": {
+                  "operationId": "listRegions",
+                  "summary": "List and filter regions.",
+                  "tags": [
+                    "Dimensions"
+                  ],
+                  "x-tier": "pro",
+                  "x-mcp-tool": "find_regions",
+                  "x-agent-skill": "discover-apis-io",
+                  "responses": {
+                    "200": {
+                      "description": "List and filter regions."
+                    }
+                  }
+                }
+              },
+              "/regions/{slug}": {
+                "get": {
+                  "operationId": "getRegion",
+                  "summary": "One region with ranked providers.",
+                  "tags": [
+                    "Dimensions"
+                  ],
+                  "x-tier": "pro",
+                  "x-mcp-tool": "get_region",
+                  "x-agent-skill": "shortlist-vendors",
+                  "responses": {
+                    "200": {
+                      "description": "One region with ranked providers."
+                    }
+                  }
+                }
+              },
+              "/areas": {
+                "get": {
+                  "operationId": "listAreas",
+                  "summary": "List and filter areas.",
+                  "tags": [
+                    "Dimensions"
+                  ],
+                  "x-tier": "pro",
+                  "x-mcp-tool": "find_areas",
+                  "x-agent-skill": "discover-apis-io",
+                  "responses": {
+                    "200": {
+                      "description": "List and filter areas."
+                    }
+                  }
+                }
+              },
+              "/areas/{slug}": {
+                "get": {
+                  "operationId": "getArea",
+                  "summary": "One area with ranked providers.",
+                  "tags": [
+                    "Dimensions"
+                  ],
+                  "x-tier": "pro",
+                  "x-mcp-tool": "get_area",
+                  "x-agent-skill": "shortlist-vendors",
+                  "responses": {
+                    "200": {
+                      "description": "One area with ranked providers."
+                    }
+                  }
+                }
+              },
+              "/ratings": {
+                "get": {
+                  "operationId": "listRatings",
+                  "summary": "Ranked ratings leaderboard.",
+                  "tags": [
+                    "Synthesis"
+                  ],
+                  "x-tier": "pro",
+                  "x-mcp-tool": "find_ratings",
+                  "x-agent-skill": "shortlist-vendors",
+                  "responses": {
+                    "200": {
+                      "description": "Ranked ratings leaderboard."
+                    }
+                  }
+                }
+              },
+              "/providers/{slug}/rating": {
+                "get": {
+                  "operationId": "getProviderRating",
+                  "summary": "A provider's full rating breakdown.",
+                  "tags": [
+                    "Synthesis"
+                  ],
+                  "x-tier": "pro",
+                  "x-mcp-tool": "get_provider_rating",
+                  "x-agent-skill": "shortlist-vendors",
+                  "responses": {
+                    "200": {
+                      "description": "A provider's full rating breakdown."
+                    }
+                  }
+                }
+              },
+              "/compare": {
+                "get": {
+                  "operationId": "compareProviders",
+                  "summary": "Compare providers side by side.",
+                  "tags": [
+                    "Synthesis"
+                  ],
+                  "x-tier": "pro",
+                  "x-mcp-tool": "compare_providers",
+                  "x-agent-skill": "audit-api-estate",
+                  "responses": {
+                    "200": {
+                      "description": "Compare providers side by side."
+                    }
+                  }
+                }
+              },
+              "/gaps": {
+                "get": {
+                  "operationId": "gapAnalysis",
+                  "summary": "Artifact + score gap analysis.",
+                  "tags": [
+                    "Synthesis"
+                  ],
+                  "x-tier": "pro",
+                  "x-mcp-tool": "gap_analysis",
+                  "x-agent-skill": "audit-api-estate",
+                  "responses": {
+                    "200": {
+                      "description": "Artifact + score gap analysis."
+                    }
+                  }
+                }
+              },
+              "/changes": {
+                "get": {
+                  "operationId": "whatsChanged",
+                  "summary": "What changed in the catalog since a date.",
+                  "tags": [
+                    "Synthesis"
+                  ],
+                  "x-tier": "pro",
+                  "x-mcp-tool": "whats_changed",
+                  "x-agent-skill": "track-api-changes",
+                  "responses": {
+                    "200": {
+                      "description": "What changed in the catalog since a date."
+                    }
+                  }
+                }
+              },
+              "/stack": {
+                "get": {
+                  "operationId": "recommendStack",
+                  "summary": "Design a recommended API stack per capability (free preview / Pro full).",
+                  "tags": [
+                    "Synthesis"
+                  ],
+                  "x-tier": "free",
+                  "x-mcp-tool": "recommend_stack",
+                  "x-agent-skill": "assemble-api-stack",
+                  "responses": {
+                    "200": {
+                      "description": "Design a recommended API stack per capability (free preview / Pro full)."
+                    }
+                  }
+                }
+              },
+              "/providers/{slug}/artifacts": {
+                "get": {
+                  "operationId": "getProviderArtifacts",
+                  "summary": "Every artifact a provider publishes, in one call.",
+                  "tags": [
+                    "Proposed"
+                  ],
+                  "x-tier": "free",
+                  "x-mcp-tool": "get_provider_artifacts",
+                  "x-agent-skill": "fetch-api-spec",
+                  "responses": {
+                    "200": {
+                      "description": "Every artifact a provider publishes, in one call."
+                    }
+                  }
+                }
+              },
+              "/apis/{aid}/artifacts": {
+                "get": {
+                  "operationId": "getApiArtifacts",
+                  "summary": "Every artifact for one API, in one call.",
+                  "tags": [
+                    "Proposed"
+                  ],
+                  "x-tier": "free",
+                  "x-mcp-tool": "get_api_artifacts",
+                  "x-agent-skill": "fetch-api-spec",
+                  "responses": {
+                    "200": {
+                      "description": "Every artifact for one API, in one call."
+                    }
+                  }
+                }
+              },
+              "/openapis/{aid}": {
+                "get": {
+                  "operationId": "getOpenapi",
+                  "summary": "A provider's primary OpenAPI inline in one call — the top agent intent.",
+                  "tags": [
+                    "Proposed"
+                  ],
+                  "x-tier": "free",
+                  "x-mcp-tool": "get_openapi",
+                  "x-agent-skill": "integrate-provider",
+                  "responses": {
+                    "200": {
+                      "description": "A provider's primary OpenAPI inline in one call — the top agent intent."
+                    }
+                  }
+                }
+              },
+              "/providers/{slug}/onboarding": {
+                "get": {
+                  "operationId": "getProviderOnboarding",
+                  "summary": "The getting-started / onboarding descriptor for a provider (auth, base URL, first call).",
+                  "tags": [
+                    "Proposed"
+                  ],
+                  "x-tier": "free",
+                  "x-mcp-tool": "get_provider_onboarding",
+                  "x-agent-skill": "integrate-provider",
+                  "responses": {
+                    "200": {
+                      "description": "The getting-started / onboarding descriptor for a provider (auth, base URL, first call)."
+                    }
+                  }
+                }
+              },
+              "/providers/{slug}/similar": {
+                "get": {
+                  "operationId": "findSimilarProviders",
+                  "summary": "Providers most similar to this one (tags, industry, artifact coverage) — alternatives.",
+                  "tags": [
+                    "Proposed"
+                  ],
+                  "x-tier": "free",
+                  "x-mcp-tool": "find_similar_providers",
+                  "x-agent-skill": "shortlist-vendors",
+                  "responses": {
+                    "200": {
+                      "description": "Providers most similar to this one (tags, industry, artifact coverage) — alternatives."
+                    }
+                  }
+                }
+              },
+              "/apis/{aid}/similar": {
+                "get": {
+                  "operationId": "findSimilarApis",
+                  "summary": "APIs most similar to this one — \"more like this\".",
+                  "tags": [
+                    "Proposed"
+                  ],
+                  "x-tier": "free",
+                  "x-mcp-tool": "find_similar_apis",
+                  "x-agent-skill": "find-api",
+                  "responses": {
+                    "200": {
+                      "description": "APIs most similar to this one — \"more like this\"."
+                    }
+                  }
+                }
+              },
+              "/industries/{slug}/leaders": {
+                "get": {
+                  "operationId": "getIndustryLeaders",
+                  "summary": "Top-rated providers in an industry.",
+                  "tags": [
+                    "Proposed"
+                  ],
+                  "x-tier": "pro",
+                  "x-mcp-tool": "get_industry_leaders",
+                  "x-agent-skill": "shortlist-vendors",
+                  "responses": {
+                    "200": {
+                      "description": "Top-rated providers in an industry."
+                    }
+                  }
+                }
+              },
+              "/regions/{slug}/leaders": {
+                "get": {
+                  "operationId": "getRegionLeaders",
+                  "summary": "Top-rated providers in a region.",
+                  "tags": [
+                    "Proposed"
+                  ],
+                  "x-tier": "pro",
+                  "x-mcp-tool": "get_region_leaders",
+                  "x-agent-skill": "shortlist-vendors",
+                  "responses": {
+                    "200": {
+                      "description": "Top-rated providers in a region."
+                    }
+                  }
+                }
+              },
+              "/areas/{slug}/leaders": {
+                "get": {
+                  "operationId": "getAreaLeaders",
+                  "summary": "Top-rated providers in a curated area.",
+                  "tags": [
+                    "Proposed"
+                  ],
+                  "x-tier": "pro",
+                  "x-mcp-tool": "get_area_leaders",
+                  "x-agent-skill": "shortlist-vendors",
+                  "responses": {
+                    "200": {
+                      "description": "Top-rated providers in a curated area."
+                    }
+                  }
+                }
+              },
+              "/providers/{slug}/rating/history": {
+                "get": {
+                  "operationId": "getRatingHistory",
+                  "summary": "A provider's rating trend over time.",
+                  "tags": [
+                    "Proposed"
+                  ],
+                  "x-tier": "pro",
+                  "x-mcp-tool": "get_rating_history",
+                  "x-agent-skill": "audit-api-estate",
+                  "responses": {
+                    "200": {
+                      "description": "A provider's rating trend over time."
+                    }
+                  }
+                }
+              },
+              "/ratings/movers": {
+                "get": {
+                  "operationId": "findRatingMovers",
+                  "summary": "The biggest rating movers (up/down) this period.",
+                  "tags": [
+                    "Proposed"
+                  ],
+                  "x-tier": "pro",
+                  "x-mcp-tool": "find_rating_movers",
+                  "x-agent-skill": "track-api-changes",
+                  "responses": {
+                    "200": {
+                      "description": "The biggest rating movers (up/down) this period."
+                    }
+                  }
+                }
+              },
+              "/gaps/industry/{slug}": {
+                "get": {
+                  "operationId": "industryGapAnalysis",
+                  "summary": "Artifacts commonly missing across an entire industry.",
+                  "tags": [
+                    "Proposed"
+                  ],
+                  "x-tier": "pro",
+                  "x-mcp-tool": "industry_gap_analysis",
+                  "x-agent-skill": "audit-api-estate",
+                  "responses": {
+                    "200": {
+                      "description": "Artifacts commonly missing across an entire industry."
+                    }
+                  }
+                }
+              },
+              "/stack/export": {
+                "get": {
+                  "operationId": "exportStack",
+                  "summary": "Export a designed capability stack as an adoptable APIs.json + Arazzo.",
+                  "tags": [
+                    "Proposed"
+                  ],
+                  "x-tier": "pro",
+                  "x-mcp-tool": "export_stack",
+                  "x-agent-skill": "assemble-api-stack",
+                  "responses": {
+                    "200": {
+                      "description": "Export a designed capability stack as an adoptable APIs.json + Arazzo."
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "Documentation",
+          "url": "https://apis.io/developer/"
+        },
+        {
+          "type": "MCPServer",
+          "url": "https://apis.io/mcp"
+        },
+        {
+          "type": "MCPServerCard",
+          "url": "https://apis.io/.well-known/mcp/server-card.json"
+        },
+        {
+          "type": "AgentSkills",
+          "url": "https://apis.io/.well-known/agent-skills/index.json"
+        },
+        {
+          "type": "Plans",
+          "url": "https://apis.io/developer/plans/"
+        },
+        {
+          "type": "Pricing",
+          "url": "https://apis.io/developer/plans/"
+        }
+      ]
+    }
+  ]
+}

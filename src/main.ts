@@ -23,7 +23,8 @@ import { esc, escAttr } from './ui';
 // human label. apis.io/apis.json has no CORS header, so we bundle it locally and let the
 // tool fetch its OpenAPI from githubusercontent (which does allow cross-origin).
 const DEFAULTS = [
-  { label: 'APIs.io', src: './examples/apis-io.json', show: 'apis.io/apis.json', blurb: 'The API → MCP → Agent-Skill surface of apis.io itself: discovery free, synthesis Pro.' },
+  { label: 'APIs.io — target surface', src: './examples/apis-io-target.json', show: 'apis.io roadmap', blurb: 'The proposed robust API → MCP → Agent-Skill buildout for apis.io — 54 operations, 11 prompts, 12 resources, 10 skills. A roadmap, not the live contract.' },
+  { label: 'APIs.io — live', src: './examples/apis-io.json', show: 'apis.io/apis.json', blurb: 'The API → MCP → Agent-Skill surface deployed on apis.io today: discovery free, synthesis Pro.' },
   { label: 'API Evangelist', src: 'https://apievangelist.com/apis.yml', show: 'apievangelist.com/apis.yml', blurb: 'The API Evangelist network index.' },
 ];
 
