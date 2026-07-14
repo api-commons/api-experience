@@ -484,3 +484,13 @@ div.resp { display: flex; align-items: center; gap: 0.6rem; padding: 0.4rem 0.6r
 .sug-tier .tglt + .tglt { border-left: 1px solid var(--line); }
 .sug-tier .tglt.on[data-t=free] { background: color-mix(in srgb, var(--ok) 15%, transparent); color: var(--ok); }
 .sug-tier .tglt.on[data-t=pro] { background: var(--accent-soft); color: var(--accent); }
+
+/* Complete-operation menu item + modal sections */
+.op-menu button[data-complete] { display: flex; flex-direction: column; align-items: flex-start; gap: .1rem; }
+.op-menu button[data-complete] strong { color: var(--accent); }
+.op-menu-sub { font-size: .68rem; color: var(--muted); }
+.op-menu-div { height: 1px; background: var(--line-soft); margin: .1rem 0; }
+.cx-sec { margin-bottom: 1rem; }
+.cx-h { font-size: .75rem; font-weight: 700; text-transform: uppercase; letter-spacing: .3px; color: var(--brand); margin: 0 0 .4rem; padding-bottom: .25rem; border-bottom: 1px solid var(--line-soft); }
+.cx-empty { font-size: .82rem; margin: .2rem 0; }
+.cx-sec .sug-item { margin-bottom: .4rem; }

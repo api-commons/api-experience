@@ -15,7 +15,7 @@ import { buildExperience, deriveSurface, computeCoverage, type ExperienceModel, 
 import { renderExperience } from './render';
 import { initEngage } from './engage';
 import { initSettings, openSettings, getToken } from './settings';
-import { suggest, applySuggestion, describe, type SuggestKind } from './suggest';
+import { suggest, applySuggestion, describe, completeOperation, type SuggestKind, type Suggestion } from './suggest';
 import { downloadBundle } from './bundle';
 import { esc, escAttr } from './ui';
 
@@ -23,9 +23,9 @@ import { esc, escAttr } from './ui';
 // human label. apis.io/apis.json has no CORS header, so we bundle it locally and let the
 // tool fetch its OpenAPI from githubusercontent (which does allow cross-origin).
 const DEFAULTS = [
-  { label: 'APIs.io — target surface', src: './examples/apis-io-target.json', show: 'apis.io roadmap', blurb: 'The proposed robust API → MCP → Agent-Skill buildout for apis.io — 54 operations, 11 prompts, 12 resources, 10 skills. A roadmap, not the live contract.' },
-  { label: 'APIs.io — live', src: './examples/apis-io.json', show: 'apis.io/apis.json', blurb: 'The API → MCP → Agent-Skill surface deployed on apis.io today: discovery free, synthesis Pro.' },
+  { label: 'APIs.io', src: './examples/apis-io.json', show: 'apis.io/apis.json', blurb: 'The live API → MCP → Agent-Skill surface of apis.io. Work it operation by operation — the ✨ on each row completes that one operation precisely.' },
   { label: 'API Evangelist', src: 'https://apievangelist.com/apis.yml', show: 'apievangelist.com/apis.yml', blurb: 'The API Evangelist network index.' },
+  { label: 'APIs.io — target (roadmap)', src: './examples/apis-io-target.json', show: 'apis.io roadmap', blurb: 'A bulk proposed buildout, for reference — prefer completing operations one at a time on the live surface above.' },
 ];
 
 let current: ApisDoc | null = null;
@@ -195,7 +195,9 @@ function openOpMenu(anchor: HTMLElement, op: ExpOperation): void {
   const el = document.createElement('div');
   el.className = 'op-menu';
   el.innerHTML = `
-    <div class="op-menu-h">Suggest for ${esc(op.method)} ${esc(op.path)}</div>
+    <div class="op-menu-h">Complete ${esc(op.method)} ${esc(op.path)}</div>
+    <button data-complete="1"><strong>✨ Complete this operation</strong><span class="op-menu-sub">tool + prompts + resources + skill, in one pass</span></button>
+    <div class="op-menu-div"></div>
     <button data-k="tool">⚙ MCP tool</button>
     <button data-k="prompt">◇ MCP prompt</button>
     <button data-k="resource">▤ MCP resource</button>
@@ -204,10 +206,80 @@ function openOpMenu(anchor: HTMLElement, op: ExpOperation): void {
   document.body.appendChild(el);
   const r = anchor.getBoundingClientRect();
   el.style.top = `${window.scrollY + r.bottom + 4}px`;
-  el.style.left = `${window.scrollX + Math.min(r.left, window.innerWidth - 220)}px`;
+  el.style.left = `${window.scrollX + Math.min(r.left, window.innerWidth - 240)}px`;
+  el.querySelector<HTMLButtonElement>('button[data-complete]')!.addEventListener('click', () => { closeOpMenu(); runComplete(op); });
   el.querySelectorAll<HTMLButtonElement>('button[data-k]').forEach((b) =>
     b.addEventListener('click', () => { closeOpMenu(); runSuggest(b.dataset.k as SuggestKind, op); }));
   opMenuEl = el;
+}
+
+async function runComplete(op: ExpOperation): Promise<void> {
+  const token = getToken();
+  if (!token) { openSettings(); return; }
+  const exp = targetApi();
+  if (!exp) { alert('Load an API that has an OpenAPI first.'); return; }
+  completeModal(op, exp, 'loading', null);
+  try {
+    const res = await completeOperation(exp, op, token);
+    completeModal(op, exp, 'ready', res);
+  } catch (e) {
+    completeModal(op, exp, 'error', null, e instanceof Error ? e.message : String(e));
+  }
+}
+
+let cModal: HTMLElement | null = null;
+function completeModal(op: ExpOperation, exp: ExpApi, state: string, res: Awaited<ReturnType<typeof completeOperation>> | null, err = ''): void {
+  if (!cModal) {
+    cModal = document.createElement('div');
+    cModal.className = 'modal suggest-modal';
+    document.body.appendChild(cModal);
+    cModal.addEventListener('click', (e) => { if (e.target === cModal) cModal!.hidden = true; });
+  }
+  const section = (title: string, kind: SuggestKind, items: Suggestion[]) => {
+    if (!items.length) return `<div class="cx-sec"><div class="cx-h">${esc(title)}</div><p class="muted cx-empty">Nothing suggested — this part looks covered.</p></div>`;
+    const hasTier = kind !== 'skill';
+    return `<div class="cx-sec"><div class="cx-h">${esc(title)}</div>${items.map((s, i) => {
+      const def = s.tier || (kind === 'tool' && op.tier === 'pro' ? 'pro' : 'free');
+      return `<div class="sug-item" data-kind="${kind}" data-i="${i}">
+        <div class="sug-text"><code>${esc(describe(kind, s))}</code>${s.description ? `<span class="sug-desc">${esc(s.description)}</span>` : ''}</div>
+        <div class="sug-actions">
+          ${hasTier ? `<span class="sug-tier"><button type="button" class="tglt ${def === 'free' ? 'on' : ''}" data-t="free">Free</button><button type="button" class="tglt ${def === 'pro' ? 'on' : ''}" data-t="pro">Pro</button></span>` : ''}
+          <button class="btn sug-add">+ Add</button>
+        </div>
+      </div>`; }).join('')}</div>`;
+  };
+  const body = state === 'loading'
+    ? `<div class="loading"><div class="spinner"></div><p>Completing <code>${esc(op.method)} ${esc(op.path)}</code>…</p></div>`
+    : state === 'error'
+      ? `<div class="error-box"><p>${esc(err)}</p></div>`
+      : `<p class="sug-intro">Precise proposal for <code>${esc(op.method)} ${esc(op.path)}</code> — add the parts you want; each edits the in-memory OpenAPI and re-renders.</p>
+         ${section('⚙ MCP tool', 'tool', res!.tools)}
+         ${section('◇ MCP prompts', 'prompt', res!.prompts)}
+         ${section('▤ MCP resources', 'resource', res!.resources)}
+         ${section('✦ Agent Skill', 'skill', res!.skills)}`;
+  cModal.innerHTML = `<div class="modal-card suggest-card">
+      <div class="modal-head"><span>✨ Complete ${esc(op.method)} ${esc(op.path)}</span><button type="button" class="sug-close" aria-label="Close">×</button></div>
+      <div class="suggest-body">${body}</div>
+    </div>`;
+  cModal.hidden = false;
+  cModal.querySelector('.sug-close')!.addEventListener('click', () => { cModal!.hidden = true; });
+  cModal.querySelectorAll<HTMLButtonElement>('.tglt').forEach((t) => t.addEventListener('click', () => {
+    const wrap = t.closest('.sug-tier')!; wrap.querySelectorAll('.tglt').forEach((x) => x.classList.remove('on')); t.classList.add('on');
+  }));
+  if (res) cModal.querySelectorAll<HTMLButtonElement>('.sug-add').forEach((btn) => btn.addEventListener('click', () => {
+    const item = btn.closest<HTMLElement>('.sug-item')!;
+    const kind = item.dataset.kind as SuggestKind;
+    const list = kind === 'tool' ? res.tools : kind === 'prompt' ? res.prompts : kind === 'resource' ? res.resources : res.skills;
+    const s = { ...list[Number(item.dataset.i)] };
+    const onTier = item.querySelector<HTMLElement>('.tglt.on');
+    if (onTier) s.tier = onTier.dataset.t as 'free' | 'pro';
+    applySuggestion(kind, exp, s, op);
+    deriveSurface(exp);
+    if (model) model.coverage = computeCoverage(model.apis);
+    editCount++;
+    reRender();
+    btn.textContent = '✓ Added'; btn.disabled = true;
+  }));
 }
 
 async function runSuggest(kind: SuggestKind, op?: ExpOperation): Promise<void> {

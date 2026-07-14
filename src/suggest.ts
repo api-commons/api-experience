@@ -87,6 +87,47 @@ Return ONLY the suggestions object.`;
   return (out.suggestions || []).slice(0, 8);
 }
 
+export interface CompleteResult { tools: Suggestion[]; prompts: Suggestion[]; resources: Suggestion[]; skills: Suggestion[]; }
+
+// Precise, operation-scoped pass: ask ONE question about a single operation and get a coherent
+// set across all four dimensions at once — the right tool, the prompts that would orchestrate it,
+// the resources it should back, and the skill it belongs to. Scoping to one op makes each part
+// precise (and mutually consistent) in a way per-kind suggestions can't be.
+export async function completeOperation(exp: ExpApi, op: ExpOperation, token: string): Promise<CompleteResult> {
+  const it = (props: Record<string, unknown>, required: string[]) =>
+    ({ type: 'object', additionalProperties: false, properties: props, required });
+  const schema = {
+    type: 'object', additionalProperties: false, required: ['tools', 'prompts', 'resources', 'skills'],
+    properties: {
+      tools: { type: 'array', items: it({ mcpTool: strT, description: strT, tier: tierEnum }, ['mcpTool', 'description']) },
+      prompts: { type: 'array', items: it({ name: strT, tier: tierEnum, description: strT }, ['name', 'tier', 'description']) },
+      resources: { type: 'array', items: it({ uri: strT, tier: tierEnum, description: strT }, ['uri', 'tier', 'description']) },
+      skills: { type: 'array', items: it({ name: strT, description: strT }, ['name', 'description']) },
+    },
+  };
+  const prompt = `Complete the DX/AX for exactly ONE operation. Propose precisely, and only what genuinely improves THIS operation — empty arrays are fine:
+  - tools: the MCP tool this operation should expose if it lacks a good one (0-1; leave empty if "tool" below is already right)
+  - prompts: MCP prompts that would orchestrate this operation's tool (0-3)
+  - resources: resources this operation should back / expose (0-2)
+  - skills: the single Agent Skill this operation belongs to (0-1; a short kebab-case slug)
+
+Focus operation:
+  ${op.method} ${op.path}  (id:${op.operationId || '?'}, tier:${op.tier}, tool:${op.mcpTool || '— none —'}, skill:${op.agentSkill || '— none —'})
+
+Full API surface for context (don't duplicate what exists; reuse existing tool/prompt/resource names where they'd apply):
+
+${context(exp)}
+
+Return ONLY the object.`;
+  const out = await callClaudeJSON<CompleteResult>({ token, system: getGuideSkill(), prompt, schema, maxTokens: 3000 });
+  return {
+    tools: (out.tools || []).slice(0, 2),
+    prompts: (out.prompts || []).slice(0, 4),
+    resources: (out.resources || []).slice(0, 3),
+    skills: (out.skills || []).slice(0, 2),
+  };
+}
+
 // A one-line human label for a suggestion in the picker.
 export function describe(kind: SuggestKind, s: Suggestion): string {
   if (kind === 'path') return `${s.method} ${s.path} → ${s.mcpTool} [${s.tier}]`;
