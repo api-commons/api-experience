@@ -17,6 +17,7 @@ import { initEngage } from './engage';
 import { initSettings, openSettings, getToken } from './settings';
 import { suggest, applySuggestion, describe, completeOperation, type SuggestKind, type Suggestion } from './suggest';
 import { downloadBundle } from './bundle';
+import { renderFlowMap, wireFlowMap } from './flowmap';
 import { esc, escAttr } from './ui';
 
 // `src` is what we actually fetch (must be same-origin or CORS-enabled); `show` is the
@@ -43,6 +44,7 @@ function shell(): void {
         <span class="tag">DX / AX for any APIs.json</span>
       </div>
       <nav>
+        <button class="ghost-btn" id="btn-map" title="Experience map — the whole surface (operations → tools → prompts/resources → skills, free/paid) in one visualization">🗺 Map</button>
         <button class="ghost-btn" id="btn-suggest-path" title="Suggest new operations (paths) with Claude — tool/prompt/resource/skill are suggested inline per operation (the ✨ on each row)">✨ Suggest path</button>
         <button class="ghost-btn" id="btn-download" title="Download versioned bundle">⤓ Download</button>
         <button class="ghost-btn" id="btn-settings" title="Settings — Claude token, guide skill">⚙ Settings</button>
@@ -60,6 +62,7 @@ function shell(): void {
     landing();
   });
   document.getElementById('btn-settings')!.addEventListener('click', () => openSettings());
+  document.getElementById('btn-map')!.addEventListener('click', () => openMap());
   document.getElementById('btn-download')!.addEventListener('click', () => doDownload());
   document.getElementById('btn-suggest-path')!.addEventListener('click', () => runSuggest('path'));
   initSettings(() => {});
@@ -225,6 +228,29 @@ async function runComplete(op: ExpOperation): Promise<void> {
   } catch (e) {
     completeModal(op, exp, 'error', null, e instanceof Error ? e.message : String(e));
   }
+}
+
+// The Experience Map — the whole surface in one visualization.
+let mapModal: HTMLElement | null = null;
+function openMap(): void {
+  if (!model || !model.apis.some((a) => a.operations.length)) {
+    alert('Load an API that has an OpenAPI surface first — the map draws its operations, tools, prompts, resources, and skills.');
+    return;
+  }
+  if (!mapModal) {
+    mapModal = document.createElement('div');
+    mapModal.className = 'modal map-modal';
+    document.body.appendChild(mapModal);
+    mapModal.addEventListener('click', (e) => { if (e.target === mapModal) mapModal!.hidden = true; });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && mapModal && !mapModal.hidden) mapModal.hidden = true; });
+  }
+  mapModal.innerHTML = `<div class="modal-card map-card">
+      <div class="modal-head"><span>🗺 Experience map <span class="muted">— ${esc(current?.name || '')}</span></span><button type="button" class="sug-close" aria-label="Close">×</button></div>
+      <div class="map-body">${renderFlowMap(model)}</div>
+    </div>`;
+  mapModal.hidden = false;
+  mapModal.querySelector('.sug-close')!.addEventListener('click', () => { mapModal!.hidden = true; });
+  wireFlowMap(mapModal.querySelector('.map-body') as HTMLElement);
 }
 
 let cModal: HTMLElement | null = null;
