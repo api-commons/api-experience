@@ -43,69 +43,191 @@ x-apis-io:
         - get_provider
     - name: integrate_provider
       tier: free
-      description: "NEW — Walk through integrating a provider: pull its OpenAPI,
-        onboarding, and auth, then produce concrete first-integration steps."
+      description: "Walk through integrating a provider: pull its OpenAPI, onboarding,
+        and auth, then produce concrete first-integration steps."
       uses:
         - get_provider
         - get_openapi
         - get_provider_onboarding
     - name: api_readiness_check
       tier: free
-      description: "NEW — Assess whether an API is ready to adopt: its artifacts,
-        rating, and what is missing."
+      description: "Assess whether an API is ready to adopt: its artifacts, rating,
+        and what is missing."
       uses:
         - get_api
         - get_api_artifacts
         - get_provider_rating
+    - name: best_in_class
+      tier: free
+      description: Find the best-in-class APIs for an artifact quality — most
+        governed, most MCP-ready, most granular OAuth.
+      uses:
+        - find_rules
+        - find_mcp
+        - find_scopes
+        - find_plans
+    - name: agent_readiness_scan
+      tier: free
+      description: Check whether an API/provider is ready for AI agents — MCP, Skills,
+        llms.txt, OpenAPI, auth clarity.
+      uses:
+        - get_provider_artifacts
+        - get_provider_onboarding
+    - name: improve_my_score
+      tier: free
+      description: Read your provider rating and turn it into a ranked, do-this-next
+        punch list.
+      uses:
+        - get_rating_rubric
+        - get_provider
+        - gap_analysis
+    - name: explore_industry
+      tier: free
+      description: Explore an industry vertical — its providers, leaders, and coverage.
+      uses:
+        - get_industry
+        - find_providers
+        - get_industry_leaders
+    - name: explore_area
+      tier: free
+      description: Explore an API Evangelist topic area and its member providers.
+      uses:
+        - get_area
+        - find_providers
+    - name: rating_methodology
+      tier: free
+      description: Explain how apis.io scores an API — so you can cite or defend a rating.
+      uses:
+        - get_rating_rubric
+    - name: insights_landscape
+      tier: free
+      description: Map where the market is investing — the demand-side landscape for a
+        topic.
+      uses:
+        - insights_dimensions
+        - insights_adoption
+        - find_company_insights
+    - name: demand_vs_supply
+      tier: free
+      description: Find where demand outruns catalog coverage — the gaps worth filling.
+      uses:
+        - insights_adoption
+        - insights_dimensions
+        - find_providers
     - name: design_api_stack
       tier: pro
       description: PRO — Design a recommended API stack for a team/domain, exportable
         as APIs.json.
       uses:
-        - find_providers
-        - apis_io_search
-        - find_industries
-        - find_ratings
         - recommend_stack
+        - compare_providers
+        - export_stack
     - name: vendor_shortlist
       tier: pro
       description: PRO — Build a scored vendor shortlist for one capability.
       uses:
         - find_providers
-        - apis_io_search
         - find_ratings
         - get_provider_rating
     - name: audit_api_estate
       tier: pro
-      description: NEW · PRO — Inventory and score a set of providers, surfacing
-        artifact and governance gaps.
+      description: PRO — Inventory and score a set of providers, surfacing artifact
+        and governance gaps.
       uses:
-        - find_providers
         - compare_providers
         - gap_analysis
         - find_ratings
     - name: find_alternatives
       tier: pro
-      description: "NEW · PRO — Migration flow: find alternatives to a provider and
-        compare them head to head."
+      description: "PRO — Migration flow: find alternatives to a provider and compare
+        them head to head."
       uses:
         - find_similar_providers
         - compare_providers
-        - get_provider_rating
     - name: build_agent_toolset
       tier: pro
-      description: NEW · PRO — For a task or domain, assemble the providers, MCP
-        tools, and skills an agent needs.
+      description: PRO — For a task or domain, assemble the providers, MCP tools, and
+        skills an agent needs.
       uses:
         - apis_io_search
         - find_artifacts
         - recommend_stack
     - name: track_provider_changes
       tier: pro
-      description: NEW · PRO — Set up change monitoring for a chosen set of providers.
+      description: PRO — Set up change monitoring for a chosen set of providers.
       uses:
         - whats_changed
         - get_provider
+    - name: company_readiness
+      tier: pro
+      description: "PRO — Assess a company from the demand data: where it invests,
+        where it is thin, and which providers are in its stack."
+      uses:
+        - get_company_insight
+        - company_gaps
+        - match_providers
+    - name: claim_and_improve
+      tier: pro
+      description: "PRO — For a provider you own: your rating, the gap, and the ranked
+        plan to close it."
+      uses:
+        - get_provider_rating
+        - get_rating_history
+        - gap_analysis
+        - compare_providers
+    - name: sell_upmarket
+      tier: pro
+      description: PRO — Find which Fortune-1000 companies to approach for your API,
+        and where they are thin.
+      uses:
+        - find_company_insights
+        - get_company_insight
+        - company_gaps
+        - match_providers
+    - name: benchmark_against_peers
+      tier: pro
+      description: PRO — Benchmark a provider against its closest peers, facet by facet.
+      uses:
+        - find_similar_providers
+        - compare_providers
+    - name: state_of_report
+      tier: pro
+      description: "BUSINESS — Scaffold a data-report on a category: ratings,
+        movement, and demand."
+      uses:
+        - find_ratings
+        - find_rating_movers
+        - insights_adoption
+        - export_dataset
+    - name: movers_briefing
+      tier: pro
+      description: PRO — A narrative briefing on the biggest rating movements, with
+        the why behind each.
+      uses:
+        - find_rating_movers
+        - get_rating_history
+        - gap_analysis
+    - name: category_leaderboard
+      tier: pro
+      description: PRO — The ranked quality leaderboard for one industry, region, or area.
+      uses:
+        - get_industry_leaders
+        - find_ratings
+    - name: story_leads
+      tier: pro
+      description: "OWNER — What is worth writing this week: rising demand x thin
+        coverage x rating movement."
+      uses:
+        - story_leads
+        - find_rating_movers
+        - insights_adoption
+    - name: network_pulse
+      tier: pro
+      description: PRO — What moved across the catalog and why it matters.
+      uses:
+        - whats_changed
+        - find_rating_movers
+        - insights_adoption
   resources:
     - uri: apis://catalog
       tier: free
@@ -231,7 +353,7 @@ x-apis-io:
       agentSkill: search-apis
     listRules:
       tier: free
-      mcpTool: find_artifacts
+      mcpTool: find_rules
       agentSkill: audit-api-estate
     listExamples:
       tier: free
@@ -243,7 +365,7 @@ x-apis-io:
       agentSkill: audit-api-estate
     listPlans:
       tier: free
-      mcpTool: find_artifacts
+      mcpTool: find_plans
       agentSkill: audit-api-estate
     listRateLimits:
       tier: free
@@ -255,19 +377,19 @@ x-apis-io:
       agentSkill: fetch-api-spec
     listMcpServers:
       tier: free
-      mcpTool: find_artifacts
+      mcpTool: find_mcp
       agentSkill: discover-mcp-servers
     listSkills:
       tier: free
       mcpTool: find_artifacts
       agentSkill: discover-apis-io
     listScopes:
-      tier: free
-      mcpTool: find_artifacts
+      tier: pro
+      mcpTool: find_scopes
       agentSkill: audit-api-estate
     listSecurity:
-      tier: free
-      mcpTool: find_artifacts
+      tier: pro
+      mcpTool: find_security
       agentSkill: audit-api-estate
     listIndustries:
       tier: pro
@@ -369,6 +491,38 @@ x-apis-io:
       tier: pro
       mcpTool: export_stack
       agentSkill: assemble-api-stack
+    listCompanyInsights:
+      tier: free
+      mcpTool: find_company_insights
+      agentSkill: discover-apis-io
+    insightsDimensions:
+      tier: free
+      mcpTool: insights_dimensions
+      agentSkill: discover-apis-io
+    insightsAdoption:
+      tier: free
+      mcpTool: insights_adoption
+      agentSkill: discover-apis-io
+    getCompanyInsight:
+      tier: free
+      mcpTool: get_company_insight
+      agentSkill: shortlist-vendors
+    companyGaps:
+      tier: pro
+      mcpTool: company_gaps
+      agentSkill: shortlist-vendors
+    matchProviders:
+      tier: pro
+      mcpTool: match_providers
+      agentSkill: shortlist-vendors
+    storyLeads:
+      tier: pro
+      mcpTool: story_leads
+      agentSkill: track-api-changes
+    exportDataset:
+      tier: pro
+      mcpTool: export_dataset
+      agentSkill: audit-api-estate
 paths:
   /search:
     get:
@@ -604,7 +758,7 @@ paths:
       tags:
         - Discovery
       x-tier: free
-      x-mcp-tool: find_artifacts
+      x-mcp-tool: find_rules
       x-agent-skill: audit-api-estate
       responses:
         "200":
@@ -640,7 +794,7 @@ paths:
       tags:
         - Discovery
       x-tier: free
-      x-mcp-tool: find_artifacts
+      x-mcp-tool: find_plans
       x-agent-skill: audit-api-estate
       responses:
         "200":
@@ -676,7 +830,7 @@ paths:
       tags:
         - Discovery
       x-tier: free
-      x-mcp-tool: find_artifacts
+      x-mcp-tool: find_mcp
       x-agent-skill: discover-mcp-servers
       responses:
         "200":
@@ -699,8 +853,8 @@ paths:
       summary: OAuth scope sets across the catalog.
       tags:
         - Discovery
-      x-tier: free
-      x-mcp-tool: find_artifacts
+      x-tier: pro
+      x-mcp-tool: find_scopes
       x-agent-skill: audit-api-estate
       responses:
         "200":
@@ -711,8 +865,8 @@ paths:
       summary: Security scheme definitions across the catalog.
       tags:
         - Discovery
-      x-tier: free
-      x-mcp-tool: find_artifacts
+      x-tier: pro
+      x-mcp-tool: find_security
       x-agent-skill: audit-api-estate
       responses:
         "200":
@@ -1024,3 +1178,102 @@ paths:
         "200":
           description: Export a designed capability stack as an adoptable APIs.json +
             Arazzo.
+  /insights/companies:
+    get:
+      operationId: listCompanyInsights
+      summary: Browse profiled companies by name (demand-side signal).
+      tags:
+        - Discovery
+      x-tier: free
+      x-mcp-tool: find_company_insights
+      x-agent-skill: discover-apis-io
+      responses:
+        "200":
+          description: Browse profiled companies by name (demand-side signal).
+  /insights/dimensions:
+    get:
+      operationId: insightsDimensions
+      summary: Rank the 40 investment dimensions by signal.
+      tags:
+        - Discovery
+      x-tier: free
+      x-mcp-tool: insights_dimensions
+      x-agent-skill: discover-apis-io
+      responses:
+        "200":
+          description: Rank the 40 investment dimensions by signal.
+  /insights/adoption:
+    get:
+      operationId: insightsAdoption
+      summary: Services / tools / standards ranked by adoption.
+      tags:
+        - Discovery
+      x-tier: free
+      x-mcp-tool: insights_adoption
+      x-agent-skill: discover-apis-io
+      responses:
+        "200":
+          description: Services / tools / standards ranked by adoption.
+  /insights/company/{slug}:
+    get:
+      operationId: getCompanyInsight
+      summary: A company's 40-dimension readiness (free preview / Pro full).
+      tags:
+        - Discovery
+      x-tier: free
+      x-mcp-tool: get_company_insight
+      x-agent-skill: shortlist-vendors
+      responses:
+        "200":
+          description: A company's 40-dimension readiness (free preview / Pro full).
+  /insights/company/{slug}/gaps:
+    get:
+      operationId: companyGaps
+      summary: A company's weakest dimensions — where to sell in.
+      tags:
+        - Discovery
+      x-tier: pro
+      x-mcp-tool: company_gaps
+      x-agent-skill: shortlist-vendors
+      responses:
+        "200":
+          description: A company's weakest dimensions — where to sell in.
+  /insights/company/{slug}/match:
+    get:
+      operationId: matchProviders
+      summary: "Supply↔demand join: catalog providers in a company stack."
+      tags:
+        - Discovery
+      x-tier: pro
+      x-mcp-tool: match_providers
+      x-agent-skill: shortlist-vendors
+      responses:
+        "200":
+          description: "Supply↔demand join: catalog providers in a company stack."
+  /story-leads:
+    get:
+      operationId: storyLeads
+      summary: "OWNER — rising demand x thin coverage x rating movement: what to write."
+      tags:
+        - Discovery
+      x-tier: pro
+      x-mcp-tool: story_leads
+      x-agent-skill: track-api-changes
+      responses:
+        "200":
+          description: "OWNER — rising demand x thin coverage x rating movement: what to
+            write."
+  /export/{dataset}:
+    get:
+      operationId: exportDataset
+      summary: BUSINESS — the whole ratings/providers dataset in one pull, with
+        co_brand.
+      tags:
+        - Discovery
+      x-tier: pro
+      x-mcp-tool: export_dataset
+      x-agent-skill: audit-api-estate
+      responses:
+        "200":
+          description: BUSINESS — the whole ratings/providers dataset in one pull, with
+            co_brand.
