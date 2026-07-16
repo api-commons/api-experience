@@ -18,8 +18,18 @@ x-apis-io:
         artifact-type collection.
     pro:
       label: Pro
-      description: Curated dimensions, rating data, and synthesis composites.
+      description: Curated dimensions, rating data, and synthesis composites —
+        per-query intelligence.
       plans: https://apis.io/developer/plans/
+    business:
+      label: Business
+      description: The whole-dataset license — bulk export with co-brand, for outlets
+        and analysts.
+      plans: https://apis.io/developer/plans/
+    owner:
+      label: Owner
+      description: Private strategic surface — the demand-vs-coverage story leads. Not
+        a purchasable plan.
   mcp:
     endpoint: https://apis.io/mcp
     serverCard: https://apis.io/.well-known/mcp/server-card.json
@@ -191,7 +201,7 @@ x-apis-io:
         - find_similar_providers
         - compare_providers
     - name: state_of_report
-      tier: pro
+      tier: business
       description: "BUSINESS — Scaffold a data-report on a category: ratings,
         movement, and demand."
       uses:
@@ -214,7 +224,7 @@ x-apis-io:
         - get_industry_leaders
         - find_ratings
     - name: story_leads
-      tier: pro
+      tier: owner
       description: "OWNER — What is worth writing this week: rising demand x thin
         coverage x rating movement."
       uses:
@@ -516,11 +526,11 @@ x-apis-io:
       mcpTool: match_providers
       agentSkill: shortlist-vendors
     storyLeads:
-      tier: pro
+      tier: owner
       mcpTool: story_leads
       agentSkill: track-api-changes
     exportDataset:
-      tier: pro
+      tier: business
       mcpTool: export_dataset
       agentSkill: audit-api-estate
 paths:
@@ -1256,7 +1266,7 @@ paths:
       summary: "OWNER — rising demand x thin coverage x rating movement: what to write."
       tags:
         - Discovery
-      x-tier: pro
+      x-tier: owner
       x-mcp-tool: story_leads
       x-agent-skill: track-api-changes
       responses:
@@ -1270,7 +1280,7 @@ paths:
         co_brand.
       tags:
         - Discovery
-      x-tier: pro
+      x-tier: business
       x-mcp-tool: export_dataset
       x-agent-skill: audit-api-estate
       responses:

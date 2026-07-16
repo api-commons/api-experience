@@ -10,7 +10,8 @@
 import { parse as parseYAML } from 'yaml';
 import type { ApisDoc, ApiItem, PropertyItem } from './model';
 
-export type Tier = 'free' | 'pro' | 'unknown';
+export type Tier = 'free' | 'pro' | 'business' | 'owner' | 'unknown';
+export const TIERS = ['free', 'pro', 'business', 'owner'] as const;
 
 const METHODS = ['get', 'post', 'put', 'patch', 'delete', 'head', 'options', 'trace'] as const;
 
@@ -66,6 +67,8 @@ export interface Coverage {
   withSkill: number;
   free: number;
   pro: number;
+  business: number;
+  owner: number;
   prompts: number;
   resources: number;
 }
@@ -77,7 +80,7 @@ export interface ExperienceModel {
 }
 
 const lc = (s: unknown) => String(s ?? '').toLowerCase().trim();
-const tierOf = (v: unknown): Tier => { const t = lc(v); return t === 'free' || t === 'pro' ? t : 'unknown'; };
+const tierOf = (v: unknown): Tier => { const t = lc(v); return t === 'free' || t === 'pro' || t === 'business' || t === 'owner' ? t : 'unknown'; };
 const arr = (v: unknown): Record<string, unknown>[] =>
   Array.isArray(v) ? v.filter((x) => x && typeof x === 'object') as Record<string, unknown>[] : [];
 const obj = (v: unknown): Record<string, unknown> =>
@@ -126,8 +129,7 @@ function extractOperations(doc: Record<string, unknown>): ExpOperation[] {
       if (!Object.keys(op).length) continue;
       const operationId = typeof op.operationId === 'string' ? op.operationId : undefined;
       const mapped = operationId ? obj(map[operationId]) : {};
-      const tierRaw = lc(op['x-tier'] ?? mapped.tier);
-      const tier: Tier = tierRaw === 'free' || tierRaw === 'pro' ? tierRaw : 'unknown';
+      const tier: Tier = tierOf(op['x-tier'] ?? mapped.tier);
       out.push({
         method: method.toUpperCase(),
         path,
@@ -211,6 +213,8 @@ export function computeCoverage(apis: ExpApi[]): Coverage {
     withSkill: allOps.filter((o) => o.agentSkill).length,
     free: allOps.filter((o) => o.tier === 'free').length,
     pro: allOps.filter((o) => o.tier === 'pro').length,
+    business: allOps.filter((o) => o.tier === 'business').length,
+    owner: allOps.filter((o) => o.tier === 'owner').length,
     prompts: apis.reduce((n, a) => n + a.prompts.length, 0),
     resources: apis.reduce((n, a) => n + a.resources.length, 0),
   };

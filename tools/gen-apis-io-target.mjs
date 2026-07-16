@@ -81,8 +81,8 @@ const OPS = [
   ['companyGaps', 'GET', '/insights/company/{slug}/gaps', 'pro', 'company_gaps', 'shortlist-vendors', "A company's weakest dimensions — where to sell in."],
   ['matchProviders', 'GET', '/insights/company/{slug}/match', 'pro', 'match_providers', 'shortlist-vendors', 'Supply↔demand join: catalog providers in a company stack.'],
   // --- Data products (above Pro) ---
-  ['storyLeads', 'GET', '/story-leads', 'pro', 'story_leads', 'track-api-changes', 'OWNER — rising demand x thin coverage x rating movement: what to write.'],
-  ['exportDataset', 'GET', '/export/{dataset}', 'pro', 'export_dataset', 'audit-api-estate', 'BUSINESS — the whole ratings/providers dataset in one pull, with co_brand.'],
+  ['storyLeads', 'GET', '/story-leads', 'owner', 'story_leads', 'track-api-changes', 'OWNER — rising demand x thin coverage x rating movement: what to write.'],
+  ['exportDataset', 'GET', '/export/{dataset}', 'business', 'export_dataset', 'audit-api-estate', 'BUSINESS — the whole ratings/providers dataset in one pull, with co_brand.'],
 ];
 
 const PROMPTS = [
@@ -112,11 +112,11 @@ const PROMPTS = [
   ['sell_upmarket', 'pro', 'PRO — Find which Fortune-1000 companies to approach for your API, and where they are thin.', ['find_company_insights', 'get_company_insight', 'company_gaps', 'match_providers']],
   ['benchmark_against_peers', 'pro', 'PRO — Benchmark a provider against its closest peers, facet by facet.', ['find_similar_providers', 'compare_providers']],
   // Media — data & the "state of" story
-  ['state_of_report', 'pro', 'BUSINESS — Scaffold a data-report on a category: ratings, movement, and demand.', ['find_ratings', 'find_rating_movers', 'insights_adoption', 'export_dataset']],
+  ['state_of_report', 'business', 'BUSINESS — Scaffold a data-report on a category: ratings, movement, and demand.', ['find_ratings', 'find_rating_movers', 'insights_adoption', 'export_dataset']],
   ['movers_briefing', 'pro', 'PRO — A narrative briefing on the biggest rating movements, with the why behind each.', ['find_rating_movers', 'get_rating_history', 'gap_analysis']],
   ['category_leaderboard', 'pro', 'PRO — The ranked quality leaderboard for one industry, region, or area.', ['get_industry_leaders', 'find_ratings']],
   // Owner — sensemaking
-  ['story_leads', 'pro', 'OWNER — What is worth writing this week: rising demand x thin coverage x rating movement.', ['story_leads', 'find_rating_movers', 'insights_adoption']],
+  ['story_leads', 'owner', 'OWNER — What is worth writing this week: rising demand x thin coverage x rating movement.', ['story_leads', 'find_rating_movers', 'insights_adoption']],
   ['network_pulse', 'pro', 'PRO — What moved across the catalog and why it matters.', ['whats_changed', 'find_rating_movers', 'insights_adoption']],
 ];
 
@@ -169,7 +169,9 @@ const openapi = {
   'x-apis-io': {
     tiers: {
       free: { label: 'Free', description: 'Raw discovery — search, providers, apis, tags, and every artifact-type collection.' },
-      pro: { label: 'Pro', description: 'Curated dimensions, rating data, and synthesis composites.', plans: 'https://apis.io/developer/plans/' },
+      pro: { label: 'Pro', description: 'Curated dimensions, rating data, and synthesis composites — per-query intelligence.', plans: 'https://apis.io/developer/plans/' },
+      business: { label: 'Business', description: 'The whole-dataset license — bulk export with co-brand, for outlets and analysts.', plans: 'https://apis.io/developer/plans/' },
+      owner: { label: 'Owner', description: 'Private strategic surface — the demand-vs-coverage story leads. Not a purchasable plan.' },
     },
     mcp: { endpoint: 'https://apis.io/mcp', serverCard: 'https://apis.io/.well-known/mcp/server-card.json' },
     agentSkills: { index: 'https://apis.io/.well-known/agent-skills/index.json' },

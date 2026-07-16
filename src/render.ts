@@ -6,8 +6,10 @@ import type { ExperienceModel, ExpApi, ExpOperation, Tier } from './experience';
 
 const pct = (n: number, d: number) => (d ? Math.round((n / d) * 100) : 0);
 
+const TIER_LABELS: Record<Tier, string> = { free: 'Free', pro: 'Pro', business: 'Business', owner: 'Owner', unknown: '?' };
+
 function tierBadge(tier: Tier): string {
-  const label = tier === 'pro' ? 'Pro' : tier === 'free' ? 'Free' : '?';
+  const label = TIER_LABELS[tier] ?? '?';
   return `<span class="tier tier-${tier}" title="${tier === 'unknown' ? 'No x-tier declared' : tier} tier">${label}</span>`;
 }
 
@@ -113,6 +115,8 @@ function apiSection(a: ExpApi): string {
       <div class="tier-split">
         <span class="tier tier-free">Free ${ops.filter((o) => o.tier === 'free').length}</span>
         <span class="tier tier-pro">Pro ${ops.filter((o) => o.tier === 'pro').length}</span>
+        ${ops.some((o) => o.tier === 'business') ? `<span class="tier tier-business">Business ${ops.filter((o) => o.tier === 'business').length}</span>` : ''}
+        ${ops.some((o) => o.tier === 'owner') ? `<span class="tier tier-owner">Owner ${ops.filter((o) => o.tier === 'owner').length}</span>` : ''}
         ${ops.some((o) => o.tier === 'unknown') ? `<span class="tier tier-unknown">? ${ops.filter((o) => o.tier === 'unknown').length}</span>` : ''}
       </div>
     </div>`;
@@ -147,7 +151,7 @@ export function renderExperience(model: ExperienceModel, sourceLabel: string): s
       <div class="tile"><span class="tile-n">${pct(c.withSkill, c.totalOps)}%</span><span class="tile-l">have Agent Skill</span></div>
       <div class="tile"><span class="tile-n">${c.prompts}</span><span class="tile-l">MCP prompts</span></div>
       <div class="tile"><span class="tile-n">${c.resources}</span><span class="tile-l">MCP resources</span></div>
-      <div class="tile"><span class="tile-n"><span class="tier tier-free">${c.free}</span> <span class="tier tier-pro">${c.pro}</span></span><span class="tile-l">free / pro ops</span></div>
+      <div class="tile"><span class="tile-n"><span class="tier tier-free">${c.free}</span> <span class="tier tier-pro">${c.pro}</span>${c.business ? ` <span class="tier tier-business">${c.business}</span>` : ''}${c.owner ? ` <span class="tier tier-owner">${c.owner}</span>` : ''}</span><span class="tile-l">ops by tier</span></div>
     </div>`;
 
   const overall = `
