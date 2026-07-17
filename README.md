@@ -2,7 +2,7 @@
 
 **A DX/AX visual layer for any [APIs.json](https://apisjson.org).**
 
-Live at **[experience.apicommons.org](https://experience.apicommons.org)** — an [API Commons](https://apicommons.org) tool, alongside [API Documentation](https://documentation.apicommons.org), [API Discovery](https://discover.apicommons.org), and [API Reusability](https://reusability.apicommons.org).
+Live at **[experience.apicommons.org](https://experience.apicommons.org)** — an [API Commons](https://apicommons.org) tool.
 
 An API is no longer just its REST surface. The same catalog now ships an **MCP server** and **Agent Skills** on top of it — and a developer or an agent moves through a chain: **REST operation → MCP tool → Agent Skill**. This tool reads an APIs.json, follows the OpenAPI it references, and *shows* that chain, so you can see the developer- and agent-experience of your systems and iterate on the gaps.
 
@@ -45,3 +45,14 @@ npm run build      # dist/ + self-contained dist/apis-json-viewer.html
 ```
 
 Vite + TypeScript, one dependency (`yaml`), no framework. Reuses the APIs.json normalizer and the API Commons house theme from the sibling tools.
+
+## Part of API Commons
+
+An open, browser-first tool from **[API Commons](https://apicommons.org)** — free, no backend, your data stays in your browser. Browse the full set at **[apicommons.org/tools](https://apicommons.org/tools/)**.
+
+**Related tools**
+- [API Documentation](https://documentation.apicommons.org) — portable HTML docs for any APIs.json
+- [API Discovery](https://discovery.apicommons.org) — browser-first registry for API artifacts
+- [API Reusability](https://reusability.apicommons.org) — score API reuse across an org
+- [Toolsmith](https://toolsmith.apicommons.org) — forge MCP tools + Agent Skills from OpenAPI
+- [Context Gate](https://contextgate.apicommons.org) — consumer-centric governance for agent context
