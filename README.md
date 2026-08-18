@@ -56,3 +56,10 @@ An open, browser-first tool from **[API Commons](https://apicommons.org)** — f
 - [API Reusability](https://reusability.apicommons.org) — score API reuse across an org
 - [Toolsmith](https://toolsmith.apicommons.org) — forge MCP tools + Agent Skills from OpenAPI
 - [Context Gate](https://contextgate.apicommons.org) — consumer-centric governance for agent context
+
+## License
+
+**[Apache-2.0](LICENSE).**
+
+API Commons licenses **code** under Apache-2.0 and **artifacts** — schemas, rulesets,
+examples and API descriptions — under CC BY-NC-SA 4.0.
