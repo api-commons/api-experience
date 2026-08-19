@@ -207,6 +207,10 @@ export function deriveSurface(exp: ExpApi): void {
   exp.resources = arr(x.resources).map((r) => ({
     uri: str(r.uri) || '(unnamed)', tier: tierOf(r.tier), description: str(r.description), operation: str(r.operation),
   }));
+  // A spec can declare its own MCP endpoint and agent-skills index under x-apis-io. Only fall back
+  // to them — an APIs.json property is the more specific statement and keeps precedence.
+  exp.mcpServer = exp.mcpServer || str(obj(x.mcp).endpoint);
+  exp.agentSkills = exp.agentSkills || str(obj(x.agentSkills).index);
   for (const o of exp.operations) {
     o.linkedPrompts = o.mcpTool ? exp.prompts.filter((p) => (p.uses || []).includes(o.mcpTool!)) : [];
     o.linkedResources = o.operationId ? exp.resources.filter((r) => r.operation === o.operationId) : [];

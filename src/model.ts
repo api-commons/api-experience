@@ -179,3 +179,50 @@ export function normalize(raw: unknown): ApisDoc {
     unknownKeys: Object.keys(r).filter((k) => !ROOT_KEYS.has(k)),
   };
 }
+
+// People paste an OpenAPI URL into a tool called "API Experience" — it is the obvious thing to try.
+// An OpenAPI IS a top-level object, so it sailed through normalize(), produced apis: [], and
+// rendered an empty page with no error: indistinguishable from a broken tool. Wrap a bare
+// OpenAPI in a synthetic one-API index instead, carrying the parsed document inline so no second
+// fetch is needed. The APIs.json path is unchanged.
+export function isOpenApiDoc(raw: unknown): boolean {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return false;
+  const r = raw as Record<string, unknown>;
+  if (Array.isArray(r.apis)) return false;                       // a real APIs.json wins
+  return (typeof r.openapi === 'string' || typeof r.swagger === 'string')
+    && typeof r.paths === 'object' && r.paths !== null;
+}
+
+export function wrapOpenApi(doc: Record<string, unknown>, label: string): Record<string, unknown> {
+  const info = (doc.info || {}) as Record<string, unknown>;
+  const servers = Array.isArray(doc.servers) ? (doc.servers as Record<string, unknown>[]) : [];
+  const x = (doc['x-apis-io'] || {}) as Record<string, unknown>;
+  const ext = (doc.externalDocs || {}) as Record<string, unknown>;
+  const contact = (info.contact || {}) as Record<string, unknown>;
+  const name = typeof info.title === 'string' ? info.title : label;
+  const properties: Record<string, unknown>[] = [{ type: 'OpenAPI', data: doc }];
+  // The spec can name its own MCP endpoint and skills index; without an APIs.json to carry them
+  // as properties, these are the only place that linkage exists.
+  const mcpEndpoint = (x.mcp as Record<string, unknown> | undefined)?.endpoint;
+  const skillsIndex = (x.agentSkills as Record<string, unknown> | undefined)?.index;
+  if (typeof mcpEndpoint === 'string') properties.push({ type: 'MCPServer', url: mcpEndpoint });
+  if (typeof skillsIndex === 'string') properties.push({ type: 'AgentSkills', url: skillsIndex });
+  if (typeof ext.url === 'string') properties.push({ type: 'Documentation', url: ext.url });
+  return {
+    name,
+    description: info.summary || info.description,
+    specificationVersion: '0.21',
+    type: 'Index',
+    'x-generated-from': `bare OpenAPI loaded from ${label}`,
+    apis: [{
+      name,
+      description: info.summary || info.description,
+      baseURL: typeof servers[0]?.url === 'string' ? servers[0].url : undefined,
+      humanURL: typeof ext.url === 'string' ? ext.url : contact.url,
+      properties,
+      contact: contact.name || contact.email
+        ? [{ FN: contact.name, email: contact.email }]
+        : [],
+    }],
+  };
+}

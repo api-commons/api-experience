@@ -10,7 +10,7 @@
 
 import './style.css';
 import { parse as parseYAML } from 'yaml';
-import { normalize, type ApisDoc } from './model';
+import { normalize, isOpenApiDoc, wrapOpenApi, type ApisDoc } from './model';
 import { buildExperience, deriveSurface, computeCoverage, type ExperienceModel, type ExpApi, type ExpOperation } from './experience';
 import { renderExperience } from './render';
 import { initEngage } from './engage';
@@ -153,7 +153,15 @@ function parseApisJson(text: string): unknown {
 
 async function loadText(text: string, label: string, baseUrl?: string): Promise<void> {
   try {
-    const doc = normalize(parseApisJson(text));
+    let raw = parseApisJson(text);
+    if (isOpenApiDoc(raw)) raw = wrapOpenApi(raw as Record<string, unknown>, label);
+    const doc = normalize(raw);
+    if (!doc.apis.length) {
+      throw new Error(
+        'Loaded, but this document describes no APIs. The tool reads an APIs.json index (an `apis` '
+        + 'array whose entries point at an OpenAPI), or a bare OpenAPI document. This looks like '
+        + 'neither.');
+    }
     await render(doc, label, baseUrl);
   } catch (e) {
     error(e instanceof Error ? e.message : String(e));
