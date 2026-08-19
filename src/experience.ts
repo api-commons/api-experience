@@ -90,8 +90,17 @@ function findProp(props: PropertyItem[], aliases: string[]): PropertyItem | unde
   return props.find((p) => aliases.includes(lc(p.type)));
 }
 
+// APIs.json property URLs are routinely RELATIVE — the spec resolves them against the index's own
+// location, and much of the api-evangelist catalog is written that way (`openapi/foo-openapi.yml`).
+// A bare fetch() resolves those against the TOOL's origin instead, so every such index silently
+// 404s here and renders as "no OpenAPI". Resolve against the document we loaded, when we know it.
+function resolveUrl(url: string, base?: string): string {
+  if (!base) return url;
+  try { return new URL(url, base).href; } catch { return url; }
+}
+
 // Resolve one API's OpenAPI: inline `data` wins, else fetch the `url`.
-async function loadOpenApi(prop: PropertyItem): Promise<{ doc?: Record<string, unknown>; url?: string; error?: string }> {
+async function loadOpenApi(prop: PropertyItem, base?: string): Promise<{ doc?: Record<string, unknown>; url?: string; error?: string }> {
   if (prop.data !== undefined && prop.data !== null) {
     if (typeof prop.data === 'object') return { doc: prop.data as Record<string, unknown> };
     if (typeof prop.data === 'string') {
@@ -99,12 +108,13 @@ async function loadOpenApi(prop: PropertyItem): Promise<{ doc?: Record<string, u
     }
   }
   if (prop.url) {
+    const url = resolveUrl(prop.url, base);
     try {
-      const res = await fetch(prop.url, { headers: { accept: 'application/yaml, application/json, text/plain, */*' } });
-      if (!res.ok) return { url: prop.url, error: `HTTP ${res.status} fetching OpenAPI` };
-      return { url: prop.url, doc: parseAny(await res.text()) };
+      const res = await fetch(url, { headers: { accept: 'application/yaml, application/json, text/plain, */*' } });
+      if (!res.ok) return { url, error: `HTTP ${res.status} fetching OpenAPI` };
+      return { url, doc: parseAny(await res.text()) };
     } catch (e) {
-      return { url: prop.url, error: `${msg(e)} (often CORS — the OpenAPI host must allow cross-origin reads)` };
+      return { url, error: `${msg(e)} (often CORS — the OpenAPI host must allow cross-origin reads)` };
     }
   }
   return { error: 'no url or inline data' };
@@ -148,7 +158,7 @@ function extractOperations(doc: Record<string, unknown>): ExpOperation[] {
 }
 const str = (v: unknown) => (typeof v === 'string' && v ? v : undefined);
 
-export async function buildExperience(doc: ApisDoc): Promise<ExperienceModel> {
+export async function buildExperience(doc: ApisDoc, baseUrl?: string): Promise<ExperienceModel> {
   const apis: ExpApi[] = [];
   for (const api of doc.apis) {
     const props = api.properties;
@@ -168,8 +178,8 @@ export async function buildExperience(doc: ApisDoc): Promise<ExperienceModel> {
       auth: findProp(props, TYPES.auth)?.url,
     };
     if (oaProp) {
-      const { doc: oaDoc, url, error } = await loadOpenApi(oaProp);
-      exp.openApiUrl = url || oaProp.url;
+      const { doc: oaDoc, url, error } = await loadOpenApi(oaProp, baseUrl);
+      exp.openApiUrl = url || resolveUrl(oaProp.url || '', baseUrl);
       if (oaDoc) {
         exp.hasOpenApi = true;
         exp.oaDoc = oaDoc;

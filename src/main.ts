@@ -151,10 +151,10 @@ function parseApisJson(text: string): unknown {
   return parseYAML(t);
 }
 
-async function loadText(text: string, label: string): Promise<void> {
+async function loadText(text: string, label: string, baseUrl?: string): Promise<void> {
   try {
     const doc = normalize(parseApisJson(text));
-    await render(doc, label);
+    await render(doc, label, baseUrl);
   } catch (e) {
     error(e instanceof Error ? e.message : String(e));
   }
@@ -166,16 +166,17 @@ async function loadUrl(url: string): Promise<void> {
   try {
     const res = await fetch(url, { headers: { accept: 'application/json, application/yaml, */*' } });
     if (!res.ok) throw new Error(`HTTP ${res.status} fetching ${url}`);
-    await loadText(await res.text(), url);
+    // Pass the index's own URL so RELATIVE property URLs resolve against it, not against us.
+    await loadText(await res.text(), url, res.url || url);
   } catch (e) {
     error(`${e instanceof Error ? e.message : String(e)}\n\nIf this is a CORS error, download the file and drop it in.`);
   }
 }
 
-async function render(doc: ApisDoc, label: string): Promise<void> {
+async function render(doc: ApisDoc, label: string, baseUrl?: string): Promise<void> {
   current = doc; sourceLabel = label; editCount = 0;
   loading(label, doc.name);
-  model = await buildExperience(doc);
+  model = await buildExperience(doc, baseUrl);
   reRender();
   view().scrollIntoView({ block: 'start' });
 }
@@ -406,7 +407,7 @@ if (inline?.textContent?.trim()) {
   // Zip mode: ./apis.json next to this file. Otherwise default-load the bundled apis.io example
   // so the tool shows the DX/AX journey on first visit; the landing (Open…) is one click away.
   fetch('./apis.json')
-    .then((r) => (r.ok ? r.text().then((t) => loadText(t, './apis.json')) : defaultLoad()))
+    .then((r) => (r.ok ? r.text().then((t) => loadText(t, './apis.json', new URL('./apis.json', location.href).href)) : defaultLoad()))
     .catch(() => defaultLoad());
 }
 
