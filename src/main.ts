@@ -24,9 +24,8 @@ import { esc, escAttr } from './ui';
 // human label. apis.io/apis.json has no CORS header, so we bundle it locally and let the
 // tool fetch its OpenAPI from githubusercontent (which does allow cross-origin).
 const DEFAULTS = [
-  { label: 'APIs.io', src: './examples/apis-io.json', show: 'apis.io/apis.json', blurb: 'The live API → MCP → Agent-Skill surface of apis.io. Work it operation by operation — the ✨ on each row completes that one operation precisely.' },
-  { label: 'API Evangelist', src: 'https://apievangelist.com/apis.yml', show: 'apievangelist.com/apis.yml', blurb: 'The API Evangelist network index.' },
-  { label: 'APIs.io — target (roadmap)', src: './examples/apis-io-target.json', show: 'apis.io roadmap', blurb: 'A bulk proposed buildout, for reference — prefer completing operations one at a time on the live surface above.' },
+  { label: 'APIs.io', src: './examples/apis-io.json', show: 'apis.io/apis.json', blurb: 'The live API → MCP → Agent-Skill surface of apis.io — 95 operations and 92 MCP tools over the API catalog. Work it operation by operation; the ✨ on each row completes that one operation precisely.' },
+  { label: 'API Evangelist', src: 'https://apievangelist.com/apis.yml', show: 'apievangelist.com/apis.yml', blurb: 'The API Evangelist research network — 80 operations and 69 MCP tools over sixteen years of API research, plus the governance and discovery toolchain.' },
 ];
 
 let current: ApisDoc | null = null;
