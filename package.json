@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
-  "description": "A DX/AX visual layer for any APIs.json \u2014 see each REST operation flow to its MCP tool and Agent Skill, with a free/paid coverage scorecard. Browser-only, no backend. An API Commons tool.",
+  "description": "A DX/AX visual layer for any APIs.json — see each REST operation flow to its MCP tool and Agent Skill, with a free/paid coverage scorecard. Browser-only, no backend. An API Commons tool.",
   "scripts": {
     "dev": "vite",
     "build": "vite build && node tools/standalone.mjs",
@@ -14,9 +14,9 @@
   },
   "license": "Apache-2.0",
   "devDependencies": {
-    "esbuild": "0.21.5",
+    "esbuild": "^0.28.2",
     "typescript": "^5.7.2",
-    "vite": "^5.4.11"
+    "vite": "^8.3.5"
   },
   "dependencies": {
     "jszip": "^3.10.1",
